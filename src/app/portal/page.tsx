@@ -7,8 +7,8 @@ export const metadata: Metadata = { title: "Employee portal", robots: { index: f
 export const dynamic = "force-dynamic";
 
 export default async function PortalPage() {
-  const { supabase, member } = await requireEmployee();
+  const { supabase } = await requireEmployee();
   const { data: brands, error } = await supabase.from("brands").select("id, slug, name").order("name");
   if (error) redirect("/auth/access?reason=unavailable");
-  return <PortalWorkspace displayName={member.display_name} brands={brands ?? []} />;
+  return <PortalWorkspace brands={brands ?? []} />;
 }

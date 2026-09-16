@@ -21,7 +21,7 @@ const details: Record<Exclude<Section, "Overview">, { title: string; body: strin
   Administration: { title: "One company. The right access.", body: "Employee access currently requires an account created by your administrator and an approved membership. In-app invitations and permission management are not available yet." },
 };
 
-export function PortalWorkspace({ displayName, brands }: { displayName: string; brands: Brand[] }) {
+export function PortalWorkspace({ brands }: { brands: Brand[] }) {
   const [section, setSection] = useState<Section>("Overview");
   const [brandId, setBrandId] = useState("");
   const selectedBrand = brands.find(brand => brand.id === brandId);
@@ -31,7 +31,7 @@ export function PortalWorkspace({ displayName, brands }: { displayName: string; 
 
   return <div className="portal-shell">
     <aside className="sidebar">
-      <Wordmark />
+      <Wordmark asLink={false} />
       <p className="sidebar-caption">EMPLOYEE PORTAL</p>
       <nav aria-label="Portal navigation">
         {sections.map(({ name, icon: Icon }) => <button key={name} className={section === name ? "selected" : ""} aria-current={section === name ? "page" : undefined} onClick={() => setSection(name)}><Icon size={19} />{name}</button>)}
@@ -39,7 +39,7 @@ export function PortalWorkspace({ displayName, brands }: { displayName: string; 
       <div className="sidebar-bottom"><span className="company-avatar">TS</span><div><strong>Tomato Sky SAL</strong><span>Lebanon</span></div></div>
     </aside>
     <div className="portal-workspace">
-      <header className="portal-header"><span>Workspace <span className="breadcrumb">/ {section}</span></span><div className="portal-account"><span>{displayName}</span><SignOutButton /></div></header>
+      <header className="portal-header"><span>Workspace <span className="breadcrumb">/ {section}</span></span><div className="portal-account"><SignOutButton /></div></header>
       <main className="portal-main">
         <div className="portal-heading">
           <div><p className="eyebrow">TOMATOSKY WORKSPACE</p><h1>{section}</h1><p>{section === "Overview" ? "Your brands and operations, in one place." : `Company-wide ${section.toLowerCase()}, organized around your team.`}</p></div>
@@ -60,7 +60,7 @@ export function PortalWorkspace({ displayName, brands }: { displayName: string; 
               </div>)}
             </div>
           </section>
-          <section className="portal-panel getting-started"><div><p className="eyebrow">YOUR WORKSPACE</p><h2>Welcome, {displayName}.</h2><p>Your employee account is connected. Next, we will set up products, locations, and opening stock for your brands.</p></div><span className="foundation-icon"><Sprout size={44} strokeWidth={1.2} /></span></section>
+          <section className="portal-panel getting-started"><div><p className="eyebrow">YOUR WORKSPACE</p><h2>Welcome to your workspace.</h2><p>Your employee account is connected. Next, we will set up products, locations, and opening stock for your brands.</p></div><span className="foundation-icon"><Sprout size={44} strokeWidth={1.2} /></span></section>
         </> : <section className="portal-panel empty-state"><span className="empty-icon"><SectionIcon size={31} strokeWidth={1.4} /></span><p className="eyebrow">{brandName.toUpperCase()}</p><h2>{details[section].title}</h2><p>{details[section].body}</p><span className="coming-label">Not available yet</span></section>}
       </main>
     </div>
