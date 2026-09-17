@@ -6,7 +6,7 @@ import type { Inventory, Movement, MovementKind } from "./inventory-types";
 // inventory migration is not applied yet, everything comes back empty.
 export async function getInventory(supabase: SupabaseClient): Promise<Inventory> {
   const [productsResult, locationsResult, movementsResult, onHandResult] = await Promise.all([
-    supabase.from("products").select("id, brand_id, name, sku, unit, brands(name)").order("name"),
+    supabase.from("products").select("id, brand_id, name, unit, brands(name)").order("name"),
     supabase.from("stock_locations").select("id, name").order("name"),
     supabase.from("stock_movements").select("id, product_id, location_id, kind, quantity, note, occurred_at, products(name), stock_locations(name)").order("occurred_at", { ascending: false }).order("created_at", { ascending: false }).limit(200),
     supabase.from("product_on_hand").select("product_id, on_hand"),
@@ -17,7 +17,6 @@ export async function getInventory(supabase: SupabaseClient): Promise<Inventory>
     brandId: row.brand_id as string,
     brandName: (row.brands as unknown as { name: string } | null)?.name ?? "",
     name: row.name as string,
-    sku: (row.sku as string | null) ?? null,
     unit: row.unit as string,
   }));
 

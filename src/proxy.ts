@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from "next/server";
 import { supabaseConfig } from "@/lib/supabase/config";
 
 // Portal surfaces: the sign-in page, the recovery/MFA flow, and the portal itself.
-const PORTAL_PATH = /^\/(?:portal|login|auth)(?:\/|$)/;
+const PORTAL_PATH = /^\/(?:portal|login|auth|m)(?:\/|$)/;
 
 // Host separation is enforced only when BOTH hosts are configured (production).
 // Locally these are unset, so a single origin (127.0.0.1) serves everything.

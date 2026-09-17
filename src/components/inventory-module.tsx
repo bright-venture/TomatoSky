@@ -21,10 +21,9 @@ export function InventoryModule({ inventory, brands, brandId }: { inventory: Inv
 
   // Add-product form
   const [pName, setPName] = useState("");
-  const [pSku, setPSku] = useState("");
   const [pUnit, setPUnit] = useState("kg");
   const [pBrand, setPBrand] = useState(brandId || brands[0]?.id || "");
-  const [editingProduct, setEditingProduct] = useState<{ id: string; name: string; sku: string; unit: string } | null>(null);
+  const [editingProduct, setEditingProduct] = useState<{ id: string; name: string; unit: string } | null>(null);
 
   // Locations
   const [locName, setLocName] = useState("");
@@ -70,9 +69,8 @@ export function InventoryModule({ inventory, brands, brandId }: { inventory: Inv
     {tab === "products" && <>
       <section className="portal-panel">
         <div className="panel-heading"><div><h2>Add a product</h2><p>Products belong to a brand and are counted in a unit (kg, box, crate…).</p></div></div>
-        <form className="inv-form" onSubmit={e => { e.preventDefault(); if (!pName.trim() || !pBrand) return; run(() => createProduct({ brandId: pBrand, name: pName, sku: pSku || null, unit: pUnit }), () => { setPName(""); setPSku(""); setPUnit("kg"); }); }}>
+        <form className="inv-form" onSubmit={e => { e.preventDefault(); if (!pName.trim() || !pBrand) return; run(() => createProduct({ brandId: pBrand, name: pName, unit: pUnit }), () => { setPName(""); setPUnit("kg"); }); }}>
           <div className="admin-field"><label htmlFor="p-name">Name</label><input id="p-name" value={pName} onChange={e => setPName(e.target.value)} maxLength={160} placeholder="Roma tomatoes" disabled={pending} required /></div>
-          <div className="admin-field"><label htmlFor="p-sku">Code / SKU <span className="opt">(optional)</span></label><input id="p-sku" value={pSku} onChange={e => setPSku(e.target.value)} maxLength={60} placeholder="RT-500" disabled={pending} /></div>
           <div className="admin-field"><label htmlFor="p-unit">Unit</label><input id="p-unit" value={pUnit} onChange={e => setPUnit(e.target.value)} maxLength={20} placeholder="kg" disabled={pending} required /></div>
           <div className="admin-field"><label htmlFor="p-brand">Brand</label><select id="p-brand" value={pBrand} onChange={e => setPBrand(e.target.value)} disabled={pending}>{brands.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}</select></div>
           <button className="folder-add" disabled={pending || !pName.trim() || !pBrand}><Plus size={16} /> Add product</button>
@@ -88,22 +86,21 @@ export function InventoryModule({ inventory, brands, brandId }: { inventory: Inv
               <span className="inv-icon"><Package size={19} /></span>
               <div className="inv-edit">
                 <input value={editingProduct.name} onChange={e => setEditingProduct({ ...editingProduct, name: e.target.value })} maxLength={160} placeholder="Name" disabled={pending} aria-label="Product name" />
-                <input value={editingProduct.sku} onChange={e => setEditingProduct({ ...editingProduct, sku: e.target.value })} maxLength={60} placeholder="SKU" disabled={pending} aria-label="SKU" />
                 <input value={editingProduct.unit} onChange={e => setEditingProduct({ ...editingProduct, unit: e.target.value })} maxLength={20} placeholder="Unit" disabled={pending} aria-label="Unit" />
-                <button className="icon-btn" disabled={pending || !editingProduct.name.trim()} onClick={() => run(() => updateProduct({ id: product.id, name: editingProduct.name, sku: editingProduct.sku || null, unit: editingProduct.unit }), () => setEditingProduct(null))} aria-label="Save"><Check size={16} /></button>
+                <button className="icon-btn" disabled={pending || !editingProduct.name.trim()} onClick={() => run(() => updateProduct({ id: product.id, name: editingProduct.name, unit: editingProduct.unit }), () => setEditingProduct(null))} aria-label="Save"><Check size={16} /></button>
                 <button type="button" className="icon-btn" onClick={() => setEditingProduct(null)} disabled={pending} aria-label="Cancel"><X size={16} /></button>
               </div>
             </li>;
             return <li key={product.id} className="inv-row">
               <span className="inv-icon"><Package size={19} /></span>
               <div className="inv-identity">
-                <strong>{product.name}{product.sku && <span className="inv-sku">{product.sku}</span>}</strong>
+                <strong>{product.name}</strong>
                 <span>{product.brandName}</span>
               </div>
               <div className="inv-onhand"><strong>{formatQty(onHand)}</strong><span>{product.unit} on hand</span></div>
               <div className="inv-actions">
                 <button type="button" className="inv-move-btn" onClick={() => startMovement(product.id)} disabled={pending}><ArrowDownToLine size={15} /> Move</button>
-                <button type="button" className="icon-btn" onClick={() => { setError(""); setEditingProduct({ id: product.id, name: product.name, sku: product.sku ?? "", unit: product.unit }); }} disabled={pending} aria-label={`Edit ${product.name}`}><Pencil size={15} /></button>
+                <button type="button" className="icon-btn" onClick={() => { setError(""); setEditingProduct({ id: product.id, name: product.name, unit: product.unit }); }} disabled={pending} aria-label={`Edit ${product.name}`}><Pencil size={15} /></button>
                 <button type="button" className="icon-btn danger" onClick={() => { if (window.confirm(`Delete "${product.name}" and all its stock movements? This cannot be undone.`)) run(() => deleteProduct({ id: product.id })); }} disabled={pending} aria-label={`Delete ${product.name}`}><Trash2 size={15} /></button>
               </div>
             </li>;
@@ -143,7 +140,7 @@ export function InventoryModule({ inventory, brands, brandId }: { inventory: Inv
         <div className="panel-heading"><div><h2>Record a movement</h2><p>Receipts add stock; dispatches remove it.</p></div></div>
         <form className="inv-form movement" onSubmit={e => { e.preventDefault(); run(() => recordMovement({ productId: mProduct, locationId: mLocation, kind: mKind, quantity: mQty, note: mNote || null, occurredAt: mDate }), () => { setMQty(""); setMNote(""); }); }}>
           <div className="admin-field"><label htmlFor="m-kind">Type</label><select id="m-kind" value={mKind} onChange={e => setMKind(e.target.value as MovementKind)} disabled={pending}><option value="receipt">Receipt (in)</option><option value="dispatch">Dispatch (out)</option></select></div>
-          <div className="admin-field"><label htmlFor="m-product">Product</label><select id="m-product" value={mProduct} onChange={e => setMProduct(e.target.value)} disabled={pending} required><option value="">Choose…</option>{inventory.products.map(p => <option key={p.id} value={p.id}>{p.name}{p.sku ? ` (${p.sku})` : ""}</option>)}</select></div>
+          <div className="admin-field"><label htmlFor="m-product">Product</label><select id="m-product" value={mProduct} onChange={e => setMProduct(e.target.value)} disabled={pending} required><option value="">Choose…</option>{inventory.products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select></div>
           <div className="admin-field"><label htmlFor="m-location">Location</label><select id="m-location" value={mLocation} onChange={e => setMLocation(e.target.value)} disabled={pending} required><option value="">Choose…</option>{inventory.locations.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}</select></div>
           <div className="admin-field"><label htmlFor="m-qty">Quantity</label><input id="m-qty" type="number" min="0" step="any" value={mQty} onChange={e => setMQty(e.target.value)} placeholder="0" disabled={pending} required /></div>
           <div className="admin-field"><label htmlFor="m-date">Date</label><input id="m-date" type="date" value={mDate} onChange={e => setMDate(e.target.value)} disabled={pending} required /></div>

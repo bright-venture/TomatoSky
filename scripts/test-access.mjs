@@ -25,6 +25,7 @@ test('portal database permissions', async t => {
     await db.exec(await readFile(new URL('../supabase/migrations/202609170001_portal_folders.sql', import.meta.url), 'utf8'));
     await db.exec(await readFile(new URL('../supabase/migrations/202609170002_roles_and_admin.sql', import.meta.url), 'utf8'));
     await db.exec(await readFile(new URL('../supabase/migrations/202609170003_inventory.sql', import.meta.url), 'utf8'));
+    await db.exec(await readFile(new URL('../supabase/migrations/202609170004_machines.sql', import.meta.url), 'utf8'));
     const alice = '00000000-0000-0000-0000-000000000001';
     const bob = '00000000-0000-0000-0000-000000000002';
     const inactive = '00000000-0000-0000-0000-000000000003';
@@ -140,6 +141,31 @@ test('portal database permissions', async t => {
       await asUser(alice, 'aal1');
       assert.equal((await db.query('select * from public.products')).rows.length, 0);
       await assert.rejects(db.query("insert into public.stock_locations (name) values ('Blocked')"), /row-level security/);
+    });
+    await t.test('machines: admins create/delete; staff read and update state but cannot create/delete', async () => {
+      await db.exec('reset role');
+      const adminU = '00000000-0000-0000-0000-000000000007';
+      await db.query('insert into auth.users values ($1, $2)', [adminU, 'admin7@example.invalid']);
+      await db.query("insert into public.portal_members (user_id, display_name, role, active) values ($1, 'Admin seven', 'admin', true)", [adminU]);
+      await asUser(adminU, 'aal2');
+      const machineId = (await db.query("insert into public.machines (name) values ('Packing line 1') returning id")).rows[0].id;
+      assert.equal((await db.query('select name from public.machines where id = $1', [machineId])).rows[0].name, 'Packing line 1');
+      // Staff (alice defaults to staff) can read + update state, but not create or delete.
+      await asUser(alice, 'aal2');
+      assert.equal((await db.query('select * from public.machines')).rows.length, 1);
+      await db.query("update public.machines set status = 'maintenance' where id = $1", [machineId]);
+      assert.equal((await db.query('select status from public.machines where id = $1', [machineId])).rows[0].status, 'maintenance');
+      await assert.rejects(db.query("insert into public.machines (name) values ('Sneaky')"), /row-level security/);
+      await db.query('delete from public.machines where id = $1', [machineId]); // RLS blocks: deletes 0 rows, no error
+      assert.equal((await db.query('select * from public.machines where id = $1', [machineId])).rows.length, 1);
+      // Admin can delete.
+      await asUser(adminU, 'aal2');
+      await db.query('delete from public.machines where id = $1', [machineId]);
+      assert.equal((await db.query('select * from public.machines')).rows.length, 0);
+    });
+    await t.test('anonymous users cannot access machines', async () => {
+      await asUser(null, null, 'anon');
+      await assert.rejects(db.query('select * from public.machines'), /permission denied/);
     });
     await t.test('users cannot self-provision or reactivate memberships', async () => {
       await asUser(outsider, 'aal2');

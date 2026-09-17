@@ -35,31 +35,29 @@ function cleanDate(value: unknown): string | null {
 }
 
 // Products ------------------------------------------------------------------
-export async function createProduct(input: { brandId: string; name: string; sku: string | null; unit: string }): Promise<InventoryResult> {
+export async function createProduct(input: { brandId: string; name: string; unit: string }): Promise<InventoryResult> {
   const { supabase } = await requireEmployee();
   const brandId = cleanId(input.brandId);
   const name = cleanText(input.name, 1, 160);
   const unit = cleanText(input.unit, 1, 20);
-  const sku = cleanOptional(input.sku, 60);
   if (!brandId) return { ok: false, error: "Choose a brand." };
   if (!name) return { ok: false, error: "Enter a product name (1–160 characters)." };
   if (!unit) return { ok: false, error: "Enter a unit (e.g. kg, box)." };
-  const { error } = await supabase.from("products").insert({ brand_id: brandId, name, sku, unit });
+  const { error } = await supabase.from("products").insert({ brand_id: brandId, name, unit });
   if (error) return { ok: false, error: "Could not add the product. Please try again." };
   revalidatePath("/portal");
   return { ok: true };
 }
 
-export async function updateProduct(input: { id: string; name: string; sku: string | null; unit: string }): Promise<InventoryResult> {
+export async function updateProduct(input: { id: string; name: string; unit: string }): Promise<InventoryResult> {
   const { supabase } = await requireEmployee();
   const id = cleanId(input.id);
   const name = cleanText(input.name, 1, 160);
   const unit = cleanText(input.unit, 1, 20);
-  const sku = cleanOptional(input.sku, 60);
   if (!id) return { ok: false, error: "Invalid product." };
   if (!name) return { ok: false, error: "Enter a product name (1–160 characters)." };
   if (!unit) return { ok: false, error: "Enter a unit (e.g. kg, box)." };
-  const { error } = await supabase.from("products").update({ name, sku, unit }).eq("id", id);
+  const { error } = await supabase.from("products").update({ name, unit }).eq("id", id);
   if (error) return { ok: false, error: "Could not update the product. Please try again." };
   revalidatePath("/portal");
   return { ok: true };

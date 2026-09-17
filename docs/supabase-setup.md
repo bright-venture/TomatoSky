@@ -89,6 +89,7 @@ Two later migrations extend the portal. Apply each once in the SQL Editor, in or
 1. `supabase/migrations/202609170001_portal_folders.sql` — employee-managed folders for the Inventory, Documents, and Reports modules (full RLS: approved MFA employees only).
 2. `supabase/migrations/202609170002_roles_and_admin.sql` — adds a `staff` role alongside `admin`. Both roles can use the portal; **Administration is admin-only**, enforced in the app. Also grants the `service_role` (admin key) the table access the foundation migration's broad `REVOKE` had removed.
 3. `supabase/migrations/202609170003_inventory.sql` — Inventory v1: products (per brand), stock locations, and stock movements with a running-total on-hand view. Approved MFA employees (admin or staff) manage all of it.
+4. `supabase/migrations/202609170004_machines.sql` — removes the unused product SKU and adds **machines** (physical equipment with a printable QR). Only admins create/delete machines; any approved MFA employee can read a machine's state and update its status/notes via the scanned `/m/<id>` page (login + MFA required).
 
 The **Administration console** (invite employees, activate/deactivate, change roles) needs the Supabase **service-role key**, since creating Auth accounts and reading the full roster are privileged operations:
 
