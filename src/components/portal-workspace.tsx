@@ -1,13 +1,12 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowUpRight, Boxes, ChartNoAxesCombined, Cpu, FileText, LayoutDashboard, Leaf, Package, Settings2, Sprout, Warehouse } from "lucide-react";
+import { ArrowUpRight, Boxes, ChartNoAxesCombined, FileText, LayoutDashboard, Leaf, Package, Settings2, Sprout, Warehouse } from "lucide-react";
 import { Wordmark } from "./wordmark";
 import { SignOutButton } from "./sign-out-button";
 import { FolderBrowser } from "./folder-browser";
 import { AdminConsole } from "./admin-console";
 import { InventoryModule } from "./inventory-module";
-import { MachinesConsole } from "./machines-console";
 import { type Folder, type FolderModule } from "@/lib/portal/folder-types";
 import type { Employee, PortalRole } from "@/lib/portal/admin-types";
 import type { Inventory } from "@/lib/portal/inventory-types";
@@ -18,7 +17,6 @@ const sections = [
   { name: "Inventory", icon: Boxes },
   { name: "Documents", icon: FileText },
   { name: "Reports", icon: ChartNoAxesCombined },
-  { name: "Machines", icon: Cpu },
   { name: "Administration", icon: Settings2 },
 ] as const;
 type Section = typeof sections[number]["name"];
@@ -27,7 +25,6 @@ const details: Record<Exclude<Section, "Overview">, { title: string; body: strin
   Inventory: { title: "A clear view of every stock movement", body: "Products, batches, warehouse locations, receipts, and dispatches will live here. Inventory entry is the next stage of your portal." },
   Documents: { title: "Company documents, together", body: "Organize scanned documents and attach them to brands and inventory records. Private document uploads will be added in a later stage." },
   Reports: { title: "The picture behind your operations", body: "Stock balances, expiry dates, and movement history will become reports once inventory records are available." },
-  Machines: { title: "Machines", body: "Machine management is available to administrators." },
   Administration: { title: "One company. The right access.", body: "Employee access currently requires an account created by your administrator and an approved membership. In-app invitations and permission management are not available yet." },
 };
 
@@ -40,8 +37,8 @@ export function PortalWorkspace({ brands, folders, role, currentUserId, employee
   const SectionIcon = sections.find(item => item.name === section)!.icon;
   // Documents and Reports use folders; Inventory has its own module below.
   const folderModule = (section === "Documents" || section === "Reports") ? section.toLowerCase() as FolderModule : null;
-  // Staff never see the admin-only sections (Machines, Administration).
-  const visibleSections = role === "admin" ? sections : sections.filter(item => item.name !== "Administration" && item.name !== "Machines");
+  // Staff never see the Administration section.
+  const visibleSections = role === "admin" ? sections : sections.filter(item => item.name !== "Administration");
 
   return <div className="portal-shell">
     <aside className="sidebar">
@@ -79,7 +76,7 @@ export function PortalWorkspace({ brands, folders, role, currentUserId, employee
             </div>
           </section>
           <section className="portal-panel getting-started"><div><p className="eyebrow">YOUR WORKSPACE</p><h2>Welcome to your workspace.</h2><p>Your employee account is connected. Next, we will set up products, locations, and opening stock for your brands.</p></div><span className="foundation-icon"><Sprout size={44} strokeWidth={1.2} /></span></section>
-        </> : section === "Inventory" ? <InventoryModule inventory={inventory} brands={brands} brandId={brandId} /> : section === "Machines" && role === "admin" ? <MachinesConsole machines={machines} /> : folderModule ? <FolderBrowser key={folderModule} module={folderModule} folders={folders.filter(folder => folder.module === folderModule)} /> : section === "Administration" && role === "admin" ? <AdminConsole employees={employees} currentUserId={currentUserId} /> : <section className="portal-panel empty-state"><span className="empty-icon"><SectionIcon size={31} strokeWidth={1.4} /></span><p className="eyebrow">{brandName.toUpperCase()}</p><h2>{details[section].title}</h2><p>{details[section].body}</p><span className="coming-label">Not available yet</span></section>}
+        </> : section === "Inventory" ? <InventoryModule inventory={inventory} brands={brands} brandId={brandId} machines={machines} isAdmin={role === "admin"} /> : folderModule ? <FolderBrowser key={folderModule} module={folderModule} folders={folders.filter(folder => folder.module === folderModule)} /> : section === "Administration" && role === "admin" ? <AdminConsole employees={employees} currentUserId={currentUserId} /> : <section className="portal-panel empty-state"><span className="empty-icon"><SectionIcon size={31} strokeWidth={1.4} /></span><p className="eyebrow">{brandName.toUpperCase()}</p><h2>{details[section].title}</h2><p>{details[section].body}</p><span className="coming-label">Not available yet</span></section>}
       </main>
     </div>
   </div>;

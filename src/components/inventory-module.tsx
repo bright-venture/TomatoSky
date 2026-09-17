@@ -2,18 +2,20 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowDownToLine, ArrowUpFromLine, Boxes, Check, MapPin, Package, Pencil, Plus, Trash2, X } from "lucide-react";
+import { ArrowDownToLine, ArrowUpFromLine, Boxes, Check, Cpu, MapPin, Package, Pencil, Plus, Trash2, X } from "lucide-react";
 import { createLocation, createProduct, deleteLocation, deleteMovement, deleteProduct, recordMovement, renameLocation, updateProduct } from "@/lib/portal/inventory";
 import type { Inventory, InventoryResult, MovementKind } from "@/lib/portal/inventory-types";
+import { MachinesConsole } from "./machines-console";
+import type { Machine } from "@/lib/portal/machine-types";
 
 type Brand = { id: string; name: string };
-type Tab = "products" | "locations" | "movements";
+type Tab = "products" | "locations" | "movements" | "machines";
 
 function formatQty(n: number): string {
   return Number.isInteger(n) ? String(n) : String(parseFloat(n.toFixed(3)));
 }
 
-export function InventoryModule({ inventory, brands, brandId }: { inventory: Inventory; brands: Brand[]; brandId: string }) {
+export function InventoryModule({ inventory, brands, brandId, machines, isAdmin }: { inventory: Inventory; brands: Brand[]; brandId: string; machines: Machine[]; isAdmin: boolean }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [tab, setTab] = useState<Tab>("products");
@@ -58,6 +60,7 @@ export function InventoryModule({ inventory, brands, brandId }: { inventory: Inv
     { id: "products", label: "Products", icon: Package },
     { id: "locations", label: "Locations", icon: MapPin },
     { id: "movements", label: "Movements", icon: Boxes },
+    ...(isAdmin ? [{ id: "machines" as Tab, label: "Machines", icon: Cpu }] : []),
   ];
 
   return <div className="inventory">
@@ -161,5 +164,7 @@ export function InventoryModule({ inventory, brands, brandId }: { inventory: Inv
         </ul>
       </section>
     </>}
+
+    {tab === "machines" && isAdmin && <MachinesConsole machines={machines} />}
   </div>;
 }
