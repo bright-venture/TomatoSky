@@ -1,14 +1,15 @@
 -- Run once in the Supabase SQL Editor, after the earlier migrations.
 -- Removes the unused product SKU and adds machines: physical equipment with a
 -- printable QR. Only admins create/delete machines; any approved MFA employee can
--- read a machine's state and update its status/notes. Contains no credentials.
+-- read a machine's state and update its status/notes. Idempotent: safe to re-run.
+-- Contains no credentials.
 begin;
 
 -- Products no longer carry a SKU.
 alter table public.products drop column if exists sku;
 
 -- Admin-only gate (active admin + MFA). Used for machine create/delete RLS.
-create function public.has_admin_access()
+create or replace function public.has_admin_access()
 returns boolean
 language sql stable security definer
 set search_path = ''
@@ -23,7 +24,7 @@ $$;
 revoke all on function public.has_admin_access() from public, anon, authenticated;
 grant execute on function public.has_admin_access() to authenticated;
 
-create table public.machines (
+create table if not exists public.machines (
   id uuid primary key default gen_random_uuid(),
   name text not null check (length(trim(name)) between 1 and 160),
   location text check (location is null or length(trim(location)) between 1 and 160),
@@ -43,9 +44,13 @@ grant select, insert, update, delete on public.machines to authenticated;
 
 -- Any approved MFA employee can read a machine (the scanned state page) and update
 -- its status/notes. Only admins may create or delete machine records.
+drop policy if exists "portal read machines" on public.machines;
 create policy "portal read machines" on public.machines for select to authenticated using ((select public.has_portal_access()));
+drop policy if exists "admin create machines" on public.machines;
 create policy "admin create machines" on public.machines for insert to authenticated with check ((select public.has_admin_access()));
+drop policy if exists "portal update machines" on public.machines;
 create policy "portal update machines" on public.machines for update to authenticated using ((select public.has_portal_access())) with check ((select public.has_portal_access()));
+drop policy if exists "admin delete machines" on public.machines;
 create policy "admin delete machines" on public.machines for delete to authenticated using ((select public.has_admin_access()));
 
 commit;
