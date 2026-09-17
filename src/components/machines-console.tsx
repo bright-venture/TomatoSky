@@ -9,7 +9,7 @@ import { MACHINE_STATUSES, STATUS_LABELS, type Machine, type MachineResult } fro
 
 const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? "";
 
-export function MachinesConsole({ machines }: { machines: Machine[] }) {
+export function MachinesConsole({ machines, isAdmin }: { machines: Machine[]; isAdmin: boolean }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState("");
@@ -33,7 +33,7 @@ export function MachinesConsole({ machines }: { machines: Machine[] }) {
 
   return <div className="machines">
     {error && <p className="folder-error" role="alert">{error}</p>}
-    <section className="portal-panel">
+    {isAdmin && <section className="portal-panel">
       <div className="panel-heading"><div><h2>Add a machine</h2><p>Each machine gets a printable QR that opens its live state page (employees must sign in).</p></div></div>
       <form className="inv-form" onSubmit={e => { e.preventDefault(); if (!name.trim()) return; run(() => createMachine({ name, location: location || null, status }), () => { setName(""); setLocation(""); setStatus("running"); }); }}>
         <div className="admin-field"><label htmlFor="mc-name">Name</label><input id="mc-name" value={name} onChange={e => setName(e.target.value)} maxLength={160} placeholder="Packing line 1" disabled={pending} required /></div>
@@ -41,7 +41,7 @@ export function MachinesConsole({ machines }: { machines: Machine[] }) {
         <div className="admin-field"><label htmlFor="mc-status">Status</label><select id="mc-status" value={status} onChange={e => setStatus(e.target.value)} disabled={pending}>{MACHINE_STATUSES.map(s => <option key={s} value={s}>{STATUS_LABELS[s]}</option>)}</select></div>
         <button className="folder-add" disabled={pending || !name.trim()}><Plus size={16} /> Add machine</button>
       </form>
-    </section>
+    </section>}
 
     <section className="portal-panel">
       <div className="panel-heading"><div><h2>Machines</h2><p>{machines.length} {machines.length === 1 ? "machine" : "machines"}</p></div></div>
@@ -60,9 +60,11 @@ export function MachinesConsole({ machines }: { machines: Machine[] }) {
           <div className="inv-identity"><strong>{machine.name}</strong><span>{machine.location ?? "No location"}</span></div>
           <span className={`status-badge ${machine.status}`}>{STATUS_LABELS[machine.status]}</span>
           <div className="inv-actions">
-            <button type="button" className="inv-move-btn" onClick={() => setQr(machine)} disabled={pending}><QrCode size={15} /> QR</button>
-            <button type="button" className="icon-btn" onClick={() => { setError(""); setEditing({ id: machine.id, name: machine.name, location: machine.location ?? "" }); }} disabled={pending} aria-label={`Edit ${machine.name}`}><Pencil size={15} /></button>
-            <button type="button" className="icon-btn danger" onClick={() => { if (window.confirm(`Delete "${machine.name}"? This cannot be undone.`)) run(() => deleteMachine({ id: machine.id })); }} disabled={pending} aria-label={`Delete ${machine.name}`}><Trash2 size={15} /></button>
+            {isAdmin ? <>
+              <button type="button" className="inv-move-btn" onClick={() => setQr(machine)} disabled={pending}><QrCode size={15} /> QR</button>
+              <button type="button" className="icon-btn" onClick={() => { setError(""); setEditing({ id: machine.id, name: machine.name, location: machine.location ?? "" }); }} disabled={pending} aria-label={`Edit ${machine.name}`}><Pencil size={15} /></button>
+              <button type="button" className="icon-btn danger" onClick={() => { if (window.confirm(`Delete "${machine.name}"? This cannot be undone.`)) run(() => deleteMachine({ id: machine.id })); }} disabled={pending} aria-label={`Delete ${machine.name}`}><Trash2 size={15} /></button>
+            </> : <a className="inv-move-btn" href={`/m/${machine.id}`}>View state</a>}
           </div>
         </li>)}
       </ul>

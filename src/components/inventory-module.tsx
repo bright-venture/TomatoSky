@@ -60,7 +60,7 @@ export function InventoryModule({ inventory, brands, brandId, machines, isAdmin 
     { id: "products", label: "Products", icon: Package },
     { id: "locations", label: "Locations", icon: MapPin },
     { id: "movements", label: "Movements", icon: Boxes },
-    ...(isAdmin ? [{ id: "machines" as Tab, label: "Machines", icon: Cpu }] : []),
+    { id: "machines", label: "Machines", icon: Cpu },
   ];
 
   return <div className="inventory">
@@ -165,6 +165,6 @@ export function InventoryModule({ inventory, brands, brandId, machines, isAdmin 
       </section>
     </>}
 
-    {tab === "machines" && isAdmin && <MachinesConsole machines={machines} />}
+    {tab === "machines" && <MachinesConsole machines={machines} isAdmin={isAdmin} />}
   </div>;
 }

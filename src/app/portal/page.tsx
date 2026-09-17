@@ -26,7 +26,7 @@ export default async function PortalPage() {
   const [employees, inventory, machines] = await Promise.all([
     role === "admin" ? getEmployees() : Promise.resolve([]),
     getInventory(supabase),
-    role === "admin" ? getMachines(supabase) : Promise.resolve([]),
+    getMachines(supabase),
   ]);
   return <PortalWorkspace brands={brands ?? []} folders={folders} role={role} currentUserId={claims.sub} employees={employees} inventory={inventory} machines={machines} />;
 }
