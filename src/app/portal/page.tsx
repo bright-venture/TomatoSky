@@ -3,12 +3,15 @@ import { redirect } from "next/navigation";
 import { PortalWorkspace } from "@/components/portal-workspace";
 import { requireEmployee } from "@/lib/auth/employee";
 import type { Folder } from "@/lib/portal/folder-types";
+import type { PortalRole } from "@/lib/portal/admin-types";
+import { getEmployees } from "@/lib/portal/employees";
 
 export const metadata: Metadata = { title: "Employee portal", robots: { index: false, follow: false } };
 export const dynamic = "force-dynamic";
 
 export default async function PortalPage() {
-  const { supabase } = await requireEmployee();
+  const { supabase, member, claims } = await requireEmployee();
+  const role = member.role as PortalRole;
   const [{ data: brands, error: brandsError }, folderResult] = await Promise.all([
     supabase.from("brands").select("id, slug, name").order("name"),
     supabase.from("portal_folders").select("id, module, parent_id, name").order("name"),
@@ -17,5 +20,7 @@ export default async function PortalPage() {
   // Folders are non-fatal: if the portal_folders migration has not been applied
   // yet, the portal still loads and the folder sections simply appear empty.
   const folders = (folderResult.data ?? []) as Folder[];
-  return <PortalWorkspace brands={brands ?? []} folders={folders} />;
+  // Only admins load the roster; staff never receive it.
+  const employees = role === "admin" ? await getEmployees() : [];
+  return <PortalWorkspace brands={brands ?? []} folders={folders} role={role} currentUserId={claims.sub} employees={employees} />;
 }

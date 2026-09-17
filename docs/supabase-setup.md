@@ -82,4 +82,19 @@ The public marketing site and the employee portal are one application, split by 
 
 If you later want stronger isolation (the public deployment not even containing portal code), promote this to two separate Vercel deployments from the same repo; the host split above is the single-deployment step toward that.
 
+## Folders and the Administration console
+
+Two later migrations extend the portal. Apply each once in the SQL Editor, in order:
+
+1. `supabase/migrations/202609170001_portal_folders.sql` — employee-managed folders for the Inventory, Documents, and Reports modules (full RLS: approved MFA employees only).
+2. `supabase/migrations/202609170002_roles_and_admin.sql` — adds a `staff` role alongside `admin`. Both roles can use the portal; **Administration is admin-only**, enforced in the app.
+
+The **Administration console** (invite employees, activate/deactivate, change roles) needs the Supabase **service-role key**, since creating Auth accounts and reading the full roster are privileged operations:
+
+- Set `SUPABASE_SERVICE_ROLE_KEY` as a **server-only** secret in Vercel (Production) and in local `.env.local`. Never prefix it with `NEXT_PUBLIC_`, and never expose it to the browser. It is used only inside `requireAdmin()`-gated server actions.
+- Employee invitations send a set-password email through the configured SMTP sender (custom SMTP, e.g. Resend, must be set up first). New employees set a password and enroll an authenticator on first sign-in.
+- Safeguards: an admin cannot deactivate or demote their own account, and the last active admin cannot be removed.
+
+Custom SMTP: configure a real sender (e.g. Resend on a `send.` subdomain) under Authentication → Emails, so recovery and invitation emails deliver reliably. The default Supabase sender is rate-limited and only reaches project-team addresses.
+
 References: [Supabase SSR](https://supabase.com/docs/guides/auth/server-side/creating-a-client), [RLS](https://supabase.com/docs/guides/database/postgres/row-level-security), [MFA](https://supabase.com/docs/guides/auth/auth-mfa/totp).

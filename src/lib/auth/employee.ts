@@ -16,7 +16,15 @@ export async function requireEmployee(requireMfa = true) {
     .maybeSingle();
 
   if (error) redirect("/auth/access?reason=unavailable");
-  if (!member?.active || member.role !== "admin") redirect("/auth/access");
+  if (!member?.active || (member.role !== "admin" && member.role !== "staff")) redirect("/auth/access");
   if (requireMfa && claims.aal !== "aal2") redirect("/auth/mfa");
   return { supabase, member, claims };
+}
+
+// For admin-only surfaces (the Administration console and its mutations).
+// Call this in every admin page and server action; role is checked server-side.
+export async function requireAdmin(requireMfa = true) {
+  const result = await requireEmployee(requireMfa);
+  if (result.member.role !== "admin") redirect("/auth/access");
+  return result;
 }

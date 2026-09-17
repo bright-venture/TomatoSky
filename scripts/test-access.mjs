@@ -23,6 +23,7 @@ test('portal database permissions', async t => {
     `);
     await db.exec(await readFile(new URL('../supabase/migrations/202609160001_portal_foundation.sql', import.meta.url), 'utf8'));
     await db.exec(await readFile(new URL('../supabase/migrations/202609170001_portal_folders.sql', import.meta.url), 'utf8'));
+    await db.exec(await readFile(new URL('../supabase/migrations/202609170002_roles_and_admin.sql', import.meta.url), 'utf8'));
     const alice = '00000000-0000-0000-0000-000000000001';
     const bob = '00000000-0000-0000-0000-000000000002';
     const inactive = '00000000-0000-0000-0000-000000000003';
@@ -99,6 +100,23 @@ test('portal database permissions', async t => {
     await t.test('the module check constraint rejects unknown modules', async () => {
       await asUser(alice, 'aal2');
       await assert.rejects(db.query("insert into public.portal_folders (module, name) values ('payroll', 'Nope')"), /violates check constraint/);
+    });
+    await t.test('a staff member with MFA can use the portal and folders', async () => {
+      await db.exec('reset role');
+      const staff = '00000000-0000-0000-0000-000000000005';
+      await db.query('insert into auth.users values ($1, $2)', [staff, 'staff@example.invalid']);
+      await db.query("insert into public.portal_members (user_id, display_name, role, active) values ($1, 'Staff member', 'staff', true)", [staff]);
+      await asUser(staff, 'aal2');
+      assert.equal((await db.query('select * from public.brands')).rows.length, 2);
+      await db.query("insert into public.portal_folders (module, name) values ('documents', 'Staff folder')");
+      assert.equal((await db.query("select * from public.portal_folders where name = 'Staff folder'")).rows.length, 1);
+      await db.query("delete from public.portal_folders where name = 'Staff folder'");
+    });
+    await t.test('the role check constraint allows admin/staff and rejects others', async () => {
+      await db.exec('reset role');
+      const ghost = '00000000-0000-0000-0000-000000000006';
+      await db.query('insert into auth.users values ($1, $2)', [ghost, 'ghost@example.invalid']);
+      await assert.rejects(db.query("insert into public.portal_members (user_id, display_name, role) values ($1, 'Ghost', 'guest')", [ghost]), /violates check constraint/);
     });
     await t.test('users cannot self-provision or reactivate memberships', async () => {
       await asUser(outsider, 'aal2');
