@@ -24,6 +24,7 @@ test('portal database permissions', async t => {
     await db.exec(await readFile(new URL('../supabase/migrations/202609160001_portal_foundation.sql', import.meta.url), 'utf8'));
     await db.exec(await readFile(new URL('../supabase/migrations/202609170001_portal_folders.sql', import.meta.url), 'utf8'));
     await db.exec(await readFile(new URL('../supabase/migrations/202609170002_roles_and_admin.sql', import.meta.url), 'utf8'));
+    await db.exec(await readFile(new URL('../supabase/migrations/202609170003_inventory.sql', import.meta.url), 'utf8'));
     const alice = '00000000-0000-0000-0000-000000000001';
     const bob = '00000000-0000-0000-0000-000000000002';
     const inactive = '00000000-0000-0000-0000-000000000003';
@@ -117,6 +118,28 @@ test('portal database permissions', async t => {
       const ghost = '00000000-0000-0000-0000-000000000006';
       await db.query('insert into auth.users values ($1, $2)', [ghost, 'ghost@example.invalid']);
       await assert.rejects(db.query("insert into public.portal_members (user_id, display_name, role) values ($1, 'Ghost', 'guest')", [ghost]), /violates check constraint/);
+    });
+    await t.test('approved MFA employee manages inventory and on-hand updates', async () => {
+      await asUser(alice, 'aal2');
+      const brandId = (await db.query('select id from public.brands order by name limit 1')).rows[0].id;
+      const locId = (await db.query("insert into public.stock_locations (name) values ('Cold room') returning id")).rows[0].id;
+      const prodId = (await db.query("insert into public.products (brand_id, name, unit) values ($1, 'Roma tomatoes', 'kg') returning id", [brandId])).rows[0].id;
+      await db.query("insert into public.stock_movements (product_id, location_id, kind, quantity) values ($1, $2, 'receipt', 100)", [prodId, locId]);
+      await db.query("insert into public.stock_movements (product_id, location_id, kind, quantity) values ($1, $2, 'dispatch', 30)", [prodId, locId]);
+      const onHand = (await db.query('select on_hand from public.product_on_hand where product_id = $1', [prodId])).rows[0].on_hand;
+      assert.equal(Number(onHand), 70);
+    });
+    await t.test('a location with movements cannot be deleted', async () => {
+      await asUser(alice, 'aal2');
+      const locId = (await db.query('select id from public.stock_locations limit 1')).rows[0].id;
+      await assert.rejects(db.query('delete from public.stock_locations where id = $1', [locId]), /foreign key|still referenced/i);
+    });
+    await t.test('anonymous and password-only users cannot access inventory', async () => {
+      await asUser(null, null, 'anon');
+      await assert.rejects(db.query('select * from public.products'), /permission denied/);
+      await asUser(alice, 'aal1');
+      assert.equal((await db.query('select * from public.products')).rows.length, 0);
+      await assert.rejects(db.query("insert into public.stock_locations (name) values ('Blocked')"), /row-level security/);
     });
     await t.test('users cannot self-provision or reactivate memberships', async () => {
       await asUser(outsider, 'aal2');

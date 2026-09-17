@@ -5,6 +5,7 @@ import { requireEmployee } from "@/lib/auth/employee";
 import type { Folder } from "@/lib/portal/folder-types";
 import type { PortalRole } from "@/lib/portal/admin-types";
 import { getEmployees } from "@/lib/portal/employees";
+import { getInventory } from "@/lib/portal/inventory-data";
 
 export const metadata: Metadata = { title: "Employee portal", robots: { index: false, follow: false } };
 export const dynamic = "force-dynamic";
@@ -21,6 +22,9 @@ export default async function PortalPage() {
   // yet, the portal still loads and the folder sections simply appear empty.
   const folders = (folderResult.data ?? []) as Folder[];
   // Only admins load the roster; staff never receive it.
-  const employees = role === "admin" ? await getEmployees() : [];
-  return <PortalWorkspace brands={brands ?? []} folders={folders} role={role} currentUserId={claims.sub} employees={employees} />;
+  const [employees, inventory] = await Promise.all([
+    role === "admin" ? getEmployees() : Promise.resolve([]),
+    getInventory(supabase),
+  ]);
+  return <PortalWorkspace brands={brands ?? []} folders={folders} role={role} currentUserId={claims.sub} employees={employees} inventory={inventory} />;
 }
