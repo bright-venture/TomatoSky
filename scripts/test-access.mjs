@@ -22,6 +22,7 @@ test('portal database permissions', async t => {
       grant usage on schema auth to anon, authenticated;
     `);
     await db.exec(await readFile(new URL('../supabase/migrations/202609160001_portal_foundation.sql', import.meta.url), 'utf8'));
+    await db.exec(await readFile(new URL('../supabase/migrations/202609170001_portal_folders.sql', import.meta.url), 'utf8'));
     const alice = '00000000-0000-0000-0000-000000000001';
     const bob = '00000000-0000-0000-0000-000000000002';
     const inactive = '00000000-0000-0000-0000-000000000003';
@@ -66,6 +67,38 @@ test('portal database permissions', async t => {
     await t.test('missing MFA claim fails closed', async () => {
       await asUser(alice, undefined);
       assert.equal((await db.query('select * from public.brands')).rows.length, 0);
+    });
+    await t.test('approved MFA employee creates, renames, and deletes folders', async () => {
+      await asUser(alice, 'aal2');
+      const id = (await db.query("insert into public.portal_folders (module, name) values ('documents', 'Contracts') returning id")).rows[0].id;
+      assert.equal((await db.query('select name from public.portal_folders where id = $1', [id])).rows[0].name, 'Contracts');
+      await db.query("update public.portal_folders set name = 'Signed contracts' where id = $1", [id]);
+      assert.equal((await db.query('select name from public.portal_folders where id = $1', [id])).rows[0].name, 'Signed contracts');
+      await db.query('delete from public.portal_folders where id = $1', [id]);
+      assert.equal((await db.query('select * from public.portal_folders')).rows.length, 0);
+    });
+    await t.test('deleting a folder cascades to its subfolders', async () => {
+      await asUser(alice, 'aal2');
+      const parent = (await db.query("insert into public.portal_folders (module, name) values ('inventory', 'Warehouse A') returning id")).rows[0].id;
+      await db.query("insert into public.portal_folders (module, name, parent_id) values ('inventory', 'Shelf 1', $1)", [parent]);
+      assert.equal((await db.query('select * from public.portal_folders')).rows.length, 2);
+      await db.query('delete from public.portal_folders where id = $1', [parent]);
+      assert.equal((await db.query('select * from public.portal_folders')).rows.length, 0);
+    });
+    await t.test('anonymous and password-only users cannot access folders', async () => {
+      await asUser(null, null, 'anon');
+      await assert.rejects(db.query('select * from public.portal_folders'), /permission denied/);
+      await asUser(alice, 'aal1');
+      assert.equal((await db.query('select * from public.portal_folders')).rows.length, 0);
+      await assert.rejects(db.query("insert into public.portal_folders (module, name) values ('reports', 'Blocked')"), /row-level security/);
+    });
+    await t.test('unapproved MFA user cannot create folders', async () => {
+      await asUser(outsider, 'aal2');
+      await assert.rejects(db.query("insert into public.portal_folders (module, name) values ('documents', 'Blocked')"), /row-level security/);
+    });
+    await t.test('the module check constraint rejects unknown modules', async () => {
+      await asUser(alice, 'aal2');
+      await assert.rejects(db.query("insert into public.portal_folders (module, name) values ('payroll', 'Nope')"), /violates check constraint/);
     });
     await t.test('users cannot self-provision or reactivate memberships', async () => {
       await asUser(outsider, 'aal2');

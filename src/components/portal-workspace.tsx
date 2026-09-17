@@ -4,6 +4,8 @@ import { useState } from "react";
 import { ArrowUpRight, Boxes, ChartNoAxesCombined, FileText, LayoutDashboard, Leaf, Package, Settings2, Sprout, Warehouse } from "lucide-react";
 import { Wordmark } from "./wordmark";
 import { SignOutButton } from "./sign-out-button";
+import { FolderBrowser } from "./folder-browser";
+import { FOLDER_MODULES, type Folder, type FolderModule } from "@/lib/portal/folder-types";
 
 const sections = [
   { name: "Overview", icon: LayoutDashboard },
@@ -21,13 +23,14 @@ const details: Record<Exclude<Section, "Overview">, { title: string; body: strin
   Administration: { title: "One company. The right access.", body: "Employee access currently requires an account created by your administrator and an approved membership. In-app invitations and permission management are not available yet." },
 };
 
-export function PortalWorkspace({ brands }: { brands: Brand[] }) {
+export function PortalWorkspace({ brands, folders }: { brands: Brand[]; folders: Folder[] }) {
   const [section, setSection] = useState<Section>("Overview");
   const [brandId, setBrandId] = useState("");
   const selectedBrand = brands.find(brand => brand.id === brandId);
   const visibleBrands = brands.filter(brand => !brandId || brand.id === brandId);
   const brandName = selectedBrand?.name ?? "All brands";
   const SectionIcon = sections.find(item => item.name === section)!.icon;
+  const folderModule = (FOLDER_MODULES as readonly string[]).includes(section.toLowerCase()) ? section.toLowerCase() as FolderModule : null;
 
   return <div className="portal-shell">
     <aside className="sidebar">
@@ -61,7 +64,7 @@ export function PortalWorkspace({ brands }: { brands: Brand[] }) {
             </div>
           </section>
           <section className="portal-panel getting-started"><div><p className="eyebrow">YOUR WORKSPACE</p><h2>Welcome to your workspace.</h2><p>Your employee account is connected. Next, we will set up products, locations, and opening stock for your brands.</p></div><span className="foundation-icon"><Sprout size={44} strokeWidth={1.2} /></span></section>
-        </> : <section className="portal-panel empty-state"><span className="empty-icon"><SectionIcon size={31} strokeWidth={1.4} /></span><p className="eyebrow">{brandName.toUpperCase()}</p><h2>{details[section].title}</h2><p>{details[section].body}</p><span className="coming-label">Not available yet</span></section>}
+        </> : folderModule ? <FolderBrowser key={folderModule} module={folderModule} folders={folders.filter(folder => folder.module === folderModule)} /> : <section className="portal-panel empty-state"><span className="empty-icon"><SectionIcon size={31} strokeWidth={1.4} /></span><p className="eyebrow">{brandName.toUpperCase()}</p><h2>{details[section].title}</h2><p>{details[section].body}</p><span className="coming-label">Not available yet</span></section>}
       </main>
     </div>
   </div>;
