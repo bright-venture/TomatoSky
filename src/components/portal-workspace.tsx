@@ -5,8 +5,7 @@ import { ArrowUpRight, Boxes, ChartNoAxesCombined, FileText, LayoutDashboard, Le
 import { Wordmark } from "./wordmark";
 import { SignOutButton } from "./sign-out-button";
 import { FolderBrowser } from "./folder-browser";
-import { AdminConsole } from "./admin-console";
-import { BrandsConsole } from "./brands-console";
+import { AdministrationConsole } from "./administration-console";
 import { InventoryModule } from "./inventory-module";
 import { type Folder, type FolderModule } from "@/lib/portal/folder-types";
 import type { Employee, PortalRole } from "@/lib/portal/admin-types";
@@ -79,7 +78,7 @@ export function PortalWorkspace({ brands, folders, role, currentUserId, employee
             </div>
           </section>
           <section className="portal-panel getting-started"><div><p className="eyebrow">YOUR WORKSPACE</p><h2>Welcome to your workspace.</h2><p>Your employee account is connected. Next, we will set up products, locations, and opening stock for your brands.</p></div><span className="foundation-icon"><Sprout size={44} strokeWidth={1.2} /></span></section>
-        </> : section === "Inventory" ? <InventoryModule inventory={inventory} brands={brands} brandId={brandId} machines={machines} isAdmin={role === "admin"} /> : folderModule ? <FolderBrowser key={folderModule} module={folderModule} folders={folders.filter(folder => folder.module === folderModule)} /> : section === "Administration" && role === "admin" ? <div className="admin-console"><BrandsConsole brands={brands} productCounts={productCounts} /><AdminConsole employees={employees} currentUserId={currentUserId} /></div> : <section className="portal-panel empty-state"><span className="empty-icon"><SectionIcon size={31} strokeWidth={1.4} /></span><p className="eyebrow">{brandName.toUpperCase()}</p><h2>{details[section].title}</h2><p>{details[section].body}</p><span className="coming-label">Not available yet</span></section>}
+        </> : section === "Inventory" ? <InventoryModule inventory={inventory} brands={brands} brandId={brandId} machines={machines} isAdmin={role === "admin"} /> : folderModule ? <FolderBrowser key={folderModule} module={folderModule} folders={folders.filter(folder => folder.module === folderModule)} /> : section === "Administration" && role === "admin" ? <AdministrationConsole brands={brands} productCounts={productCounts} employees={employees} currentUserId={currentUserId} /> : <section className="portal-panel empty-state"><span className="empty-icon"><SectionIcon size={31} strokeWidth={1.4} /></span><p className="eyebrow">{brandName.toUpperCase()}</p><h2>{details[section].title}</h2><p>{details[section].body}</p><span className="coming-label">Not available yet</span></section>}
       </main>
     </div>
   </div>;
