@@ -11,8 +11,9 @@ export function HeroIntro() {
   const reduced = useReducedMotion();
   const ref = useRef<HTMLElement>(null);
   const { scrollYProgress } = useScroll({ target: ref, offset: ["start start", "end start"] });
-  const imageY = useTransform(scrollYProgress, [0, 1], ["0%", "14%"]);
-  const imageScale = useTransform(scrollYProgress, [0, 1], [1, 1.08]);
+  // Start slightly zoomed so the parallax shift never exposes the container edge.
+  const imageY = useTransform(scrollYProgress, [0, 1], ["0%", "6%"]);
+  const imageScale = useTransform(scrollYProgress, [0, 1], [1.08, 1.16]);
 
   const outer: Variants = { hidden: {}, show: { transition: { staggerChildren: reduced ? 0 : 0.14, delayChildren: 0.15 } } };
   const group: Variants = { hidden: {}, show: { transition: { staggerChildren: reduced ? 0 : 0.12 } } };
