@@ -148,8 +148,8 @@
 .mr-group{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.6px;color:#647a5f;background:#f2f5ee;padding:6px 10px;border-radius:5px;margin:10px 0 2px}
 .mr-row{display:grid;grid-template-columns:1fr auto;gap:8px 12px;align-items:center;padding:7px 2px;border-bottom:1px solid #eef1ea}
 .mr-label{font-size:14px;color:var(--ink)}
-.mr-states{display:flex;gap:6px}
-.mr-state{width:34px;height:34px;border:1px solid var(--line);background:#fff;border-radius:6px;font-size:13px;font-weight:600;color:#8a968a;cursor:pointer}
+.mr-states{display:flex;gap:6px;flex-wrap:wrap}
+.mr-state{min-height:34px;padding:6px 12px;border:1px solid var(--line);background:#fff;border-radius:6px;font-size:13px;font-weight:600;color:#8a968a;cursor:pointer}
 .mr-state.on.ok{background:#e8efe0;color:#3d6b45;border-color:#bcd3ae}
 .mr-state.on.repaired{background:#f7efd9;color:#8a6d1f;border-color:#e6d3a3}
 .mr-state.on.changed{background:#e5eef4;color:#2f6088;border-color:#b9d3e6}

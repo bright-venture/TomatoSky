@@ -98,7 +98,7 @@ export function MaintenanceReportForm({ machine, template, defaultTechnician, in
     </fieldset>
 
     <div className="mr-section-title">Maintenance checklist</div>
-    <div className="mr-check-legend">Tap a mark per part — <strong>O</strong> OK · <strong>R</strong> Repaired · <strong>C</strong> Changed. Add a note as needed.</div>
+    <div className="mr-check-legend">Tap a mark per part — OK, Repaired, or Changed. Add a note as needed.</div>
     <div className="mr-check">
       {grouped.map(({ group, items }) => <Fragment key={group}>
         <div className="mr-group">{group}</div>
@@ -107,7 +107,7 @@ export function MaintenanceReportForm({ machine, template, defaultTechnician, in
           return <div className="mr-row" key={item.key}>
             <span className="mr-label">{item.label}</span>
             <span className="mr-states">
-              {CHECK_STATES.map(s => <button type="button" key={s} className={`mr-state ${s} ${entry.state === s ? "on" : ""}`} disabled={pending} onClick={() => setState(item.key, s)} aria-pressed={entry.state === s} aria-label={`${item.label}: ${CHECK_STATE_LABELS[s]}`}>{CHECK_STATE_LABELS[s][0]}</button>)}
+              {CHECK_STATES.map(s => <button type="button" key={s} className={`mr-state ${s} ${entry.state === s ? "on" : ""}`} disabled={pending} onClick={() => setState(item.key, s)} aria-pressed={entry.state === s} aria-label={`${item.label}: ${CHECK_STATE_LABELS[s]}`}>{CHECK_STATE_LABELS[s]}</button>)}
             </span>
             <input className="mr-note" value={entry.note ?? ""} onChange={e => setNote(item.key, e.target.value)} maxLength={300} placeholder="Notes" disabled={pending} aria-label={`${item.label} notes`} />
           </div>;
