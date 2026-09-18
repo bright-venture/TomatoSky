@@ -2,14 +2,29 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowRightLeft, Check, Folder, FolderPlus, Pencil, Trash2, X } from "lucide-react";
+import { ArrowRightLeft, Check, ClipboardList, Folder, FolderPlus, Pencil, Trash2, X } from "lucide-react";
 import { createFolder, deleteFolder, moveFolder, renameFolder } from "@/lib/portal/folders";
+import { deleteReportSnapshot } from "@/lib/portal/maintenance";
 import type { Folder as FolderRow, FolderModule, FolderResult } from "@/lib/portal/folder-types";
+import type { Machine } from "@/lib/portal/machine-types";
+import type { ReportSnapshot } from "@/lib/portal/maintenance-templates";
+import { VersionRow } from "./version-row";
 
-export function FolderBrowser({ module, folders, brandId }: { module: FolderModule; folders: FolderRow[]; brandId: string }) {
+export function FolderBrowser({ module, folders, brandId, machines = [], snapshots = [], isAdmin = false, initialFolderId = null }: { module: FolderModule; folders: FolderRow[]; brandId: string; machines?: Machine[]; snapshots?: ReportSnapshot[]; isAdmin?: boolean; initialFolderId?: string | null }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
-  const [currentId, setCurrentId] = useState<string | null>(null);
+  const [currentId, setCurrentId] = useState<string | null>(initialFolderId ?? null);
+
+  const snapsByMachine = useMemo(() => {
+    const map = new Map<string, ReportSnapshot[]>();
+    for (const s of snapshots) { const l = map.get(s.machineId) ?? []; l.push(s); map.set(s.machineId, l); }
+    return map;
+  }, [snapshots]);
+
+  function removeVersion(id: string) {
+    if (!window.confirm("Are you sure you want to delete this saved version? This cannot be undone.")) return;
+    startTransition(async () => { await deleteReportSnapshot({ id }); router.refresh(); });
+  }
   const [newName, setNewName] = useState("");
   const [renaming, setRenaming] = useState<{ id: string; name: string } | null>(null);
   const [moving, setMoving] = useState<{ id: string; parentId: string } | null>(null);
@@ -19,6 +34,8 @@ export function FolderBrowser({ module, folders, brandId }: { module: FolderModu
   const byId = useMemo(() => new Map(folders.map(folder => [folder.id, folder])), [folders]);
   const activeId = currentId && byId.has(currentId) ? currentId : null;
   const children = folders.filter(folder => folder.parent_id === activeId).sort((a, b) => a.name.localeCompare(b.name));
+  // Machines whose saved report versions belong in the folder currently open.
+  const machinesHere = activeId ? machines.filter(m => m.documentsFolderId === activeId) : [];
 
   const path = useMemo(() => {
     const chain: FolderRow[] = [];
@@ -121,5 +138,16 @@ export function FolderBrowser({ module, folders, brandId }: { module: FolderModu
         </li>;
       })}
     </ul>}
+
+    {machinesHere.length > 0 && <div className="folder-reports">
+      {machinesHere.map(m => {
+        const versions = snapsByMachine.get(m.id) ?? [];
+        return <div className="folder-report-machine" key={m.id}>
+          <div className="folder-report-head"><ClipboardList size={16} /> <strong>{m.name}</strong> <span>saved report versions ({versions.length})</span></div>
+          {versions.length === 0 ? <p className="mr-history-empty">No saved versions yet for this machine.</p>
+            : versions.map(v => <VersionRow key={v.id} version={v} isAdmin={isAdmin} pending={pending} onDelete={() => removeVersion(v.id)} />)}
+        </div>;
+      })}
+    </div>}
   </section>;
 }

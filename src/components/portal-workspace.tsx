@@ -33,6 +33,16 @@ const details: Record<Exclude<Section, "Overview">, { title: string; body: strin
 export function PortalWorkspace({ brands, folders, role, currentUserId, employees, inventory, machines, reports, snapshots }: { brands: Brand[]; folders: Folder[]; role: PortalRole; currentUserId: string; employees: Employee[]; inventory: Inventory; machines: Machine[]; reports: MaintenanceReport[]; snapshots: ReportSnapshot[] }) {
   const [section, setSection] = useState<Section>("Overview");
   const [brandId, setBrandId] = useState("");
+  // When the Reports "Versions" button opens a machine's Documents folder.
+  const [targetFolder, setTargetFolder] = useState<string | null>(null);
+  const documentFolders = folders.filter(folder => folder.module === "documents").map(folder => ({ id: folder.id, name: folder.name, parentId: folder.parent_id, brandId: folder.brand_id }));
+
+  function openVersions(machine: Machine) {
+    if (!machine.documentsFolderId) return;
+    setBrandId(machine.brandId ?? "");
+    setTargetFolder(machine.documentsFolderId);
+    setSection("Documents");
+  }
   const selectedBrand = brands.find(brand => brand.id === brandId);
   const visibleBrands = brands.filter(brand => !brandId || brand.id === brandId);
   const brandName = selectedBrand?.name ?? "All brands";
@@ -60,7 +70,7 @@ export function PortalWorkspace({ brands, folders, role, currentUserId, employee
           <div><p className="eyebrow">TOMATOSKY WORKSPACE</p><h1>{section}</h1><p>{section === "Overview" ? "Your brands and operations, in one place." : `Company-wide ${section.toLowerCase()}, organized around your team.`}</p></div>
           <div className="brand-select"><label htmlFor="brand-filter">Brand</label><select id="brand-filter" value={brandId} onChange={event => setBrandId(event.target.value)}><option value="">All brands</option>{brands.map(brand => <option key={brand.id} value={brand.id}>{brand.name}</option>)}</select></div>
         </div>
-        {section === "Reports" ? <ReportsList machines={machines} reports={reports} snapshots={snapshots} brandId={brandId} isAdmin={role === "admin"} /> : section === "Overview" ? <>
+        {section === "Reports" ? <ReportsList machines={machines} reports={reports} snapshots={snapshots} brandId={brandId} onOpenVersions={openVersions} /> : section === "Overview" ? <>
           <div className="metric-grid">
             {[
               { label: "Products", icon: Package, value: inventory.products.filter(product => !brandId || product.brandId === brandId).length, hint: "in catalog" },
@@ -80,8 +90,8 @@ export function PortalWorkspace({ brands, folders, role, currentUserId, employee
             </div>
           </section>
           <section className="portal-panel getting-started"><div><p className="eyebrow">YOUR WORKSPACE</p><h2>Welcome to your workspace.</h2><p>Your employee account is connected. Next, we will set up products, locations, and opening stock for your brands.</p></div><span className="foundation-icon"><Sprout size={44} strokeWidth={1.2} /></span></section>
-        </> : section === "Inventory" ? <InventoryModule inventory={inventory} brands={brands} brandId={brandId} machines={machines} isAdmin={role === "admin"} /> : folderModule ? (brandId
-          ? <FolderBrowser key={folderModule + brandId} module={folderModule} folders={folders.filter(folder => folder.module === folderModule && folder.brand_id === brandId)} brandId={brandId} />
+        </> : section === "Inventory" ? <InventoryModule inventory={inventory} brands={brands} brandId={brandId} machines={machines} isAdmin={role === "admin"} documentFolders={documentFolders} /> : folderModule ? (brandId
+          ? <FolderBrowser key={folderModule + brandId + (targetFolder ?? "")} module={folderModule} folders={folders.filter(folder => folder.module === folderModule && folder.brand_id === brandId)} brandId={brandId} machines={machines} snapshots={snapshots} isAdmin={role === "admin"} initialFolderId={targetFolder} />
           : <section className="portal-panel empty-state"><span className="empty-icon"><SectionIcon size={31} strokeWidth={1.4} /></span><p className="eyebrow">{section.toUpperCase()}</p><h2>Choose a brand</h2><p>{section} are organized per brand. Select a brand from the menu above to view and manage its {section.toLowerCase()}.</p></section>
         ) : section === "Administration" && role === "admin" ? <AdministrationConsole brands={brands} productCounts={productCounts} employees={employees} currentUserId={currentUserId} /> : <section className="portal-panel empty-state"><span className="empty-icon"><SectionIcon size={31} strokeWidth={1.4} /></span><p className="eyebrow">{brandName.toUpperCase()}</p><h2>{details[section].title}</h2><p>{details[section].body}</p><span className="coming-label">Not available yet</span></section>}
       </main>

@@ -222,6 +222,10 @@
 .report-tag.none{background:#eef1ec;color:#7a857a}
 .report-updated{font-size:12px;color:var(--muted);white-space:nowrap}
 .report-versions{padding:12px 25px 18px;background:#fafbf9;border-top:1px solid #edf0e9}
+.folder-reports{padding:8px 25px 22px;border-top:1px solid var(--line)}
+.folder-report-machine{margin-top:16px}
+.folder-report-head{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--ink);margin-bottom:8px}
+.folder-report-head span{color:var(--muted);font-size:12px}
 .list-sort{display:flex;align-items:center;gap:8px;font-size:12px;color:#788576}
 .list-sort label{text-transform:uppercase;letter-spacing:1px;font-weight:600}
 .list-sort select{appearance:none;-webkit-appearance:none;-moz-appearance:none;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23657067' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E") no-repeat right 11px center;border:1px solid var(--line);border-radius:6px;padding:9px 34px 9px 12px;font:inherit;font-size:13px;color:var(--ink);cursor:pointer}

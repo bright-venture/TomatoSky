@@ -11,8 +11,9 @@ import { MACHINE_MODELS, MODEL_LABELS, type MachineModel } from "@/lib/portal/ma
 const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? "";
 
 type Brand = { id: string; name: string };
+type DocFolder = { id: string; name: string; parentId: string | null; brandId: string | null };
 
-export function MachinesConsole({ machines, isAdmin, brands, brandId }: { machines: Machine[]; isAdmin: boolean; brands: Brand[]; brandId: string }) {
+export function MachinesConsole({ machines, isAdmin, brands, brandId, documentFolders }: { machines: Machine[]; isAdmin: boolean; brands: Brand[]; brandId: string; documentFolders: DocFolder[] }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState("");
@@ -22,7 +23,18 @@ export function MachinesConsole({ machines, isAdmin, brands, brandId }: { machin
   const [brand, setBrand] = useState(brandId || brands[0]?.id || "");
   const [model, setModel] = useState<MachineModel>("walk_behind_scrubber");
   const [assetTag, setAssetTag] = useState("");
-  const [editing, setEditing] = useState<{ id: string; name: string; location: string; model: MachineModel; assetTag: string } | null>(null);
+  const [docFolder, setDocFolder] = useState("");
+  const [editing, setEditing] = useState<{ id: string; name: string; location: string; model: MachineModel; assetTag: string; documentsFolderId: string } | null>(null);
+
+  // Documents folders for a given brand, labelled by their nested path.
+  const folderPath = (id: string) => {
+    const byId = new Map(documentFolders.map(f => [f.id, f]));
+    const parts: string[] = [];
+    let cursor: string | null = id;
+    while (cursor) { const f = byId.get(cursor); if (!f) break; parts.unshift(f.name); cursor = f.parentId; }
+    return parts.join(" / ");
+  };
+  const foldersFor = (bId: string) => documentFolders.filter(f => f.brandId === bId).sort((a, b) => folderPath(a.id).localeCompare(folderPath(b.id)));
   const [qr, setQr] = useState<Machine | null>(null);
   const [adding, setAdding] = useState(false);
 
@@ -59,7 +71,8 @@ export function MachinesConsole({ machines, isAdmin, brands, brandId }: { machin
             <select value={editing.model} onChange={e => setEditing({ ...editing, model: e.target.value as MachineModel })} disabled={pending} aria-label="Model">{MACHINE_MODELS.map(m => <option key={m} value={m}>{MODEL_LABELS[m]}</option>)}</select>
             <input value={editing.assetTag} onChange={e => setEditing({ ...editing, assetTag: e.target.value })} maxLength={80} placeholder="Machine ID" disabled={pending} aria-label="Machine ID" />
             <input value={editing.location} onChange={e => setEditing({ ...editing, location: e.target.value })} maxLength={160} placeholder="Location" disabled={pending} aria-label="Location" />
-            <button className="icon-btn" disabled={pending || !editing.name.trim()} onClick={() => run(() => updateMachine({ id: machine.id, name: editing.name, location: editing.location || null, model: editing.model, assetTag: editing.assetTag || null }), () => setEditing(null))} aria-label="Save"><Check size={16} /></button>
+            <select value={editing.documentsFolderId} onChange={e => setEditing({ ...editing, documentsFolderId: e.target.value })} disabled={pending} aria-label="Documents folder"><option value="">No folder</option>{foldersFor(machine.brandId ?? "").map(f => <option key={f.id} value={f.id}>{folderPath(f.id)}</option>)}</select>
+            <button className="icon-btn" disabled={pending || !editing.name.trim()} onClick={() => run(() => updateMachine({ id: machine.id, name: editing.name, location: editing.location || null, model: editing.model, assetTag: editing.assetTag || null, documentsFolderId: editing.documentsFolderId || null }), () => setEditing(null))} aria-label="Save"><Check size={16} /></button>
             <button type="button" className="icon-btn" onClick={() => setEditing(null)} disabled={pending} aria-label="Cancel"><X size={16} /></button>
           </div>
         </li> : <li key={machine.id} className="inv-row">
@@ -69,7 +82,7 @@ export function MachinesConsole({ machines, isAdmin, brands, brandId }: { machin
           <div className="inv-actions">
             {isAdmin ? <>
               <button type="button" className="inv-move-btn" onClick={() => setQr(machine)} disabled={pending}><QrCode size={15} /> QR</button>
-              <button type="button" className="icon-btn" onClick={() => { setError(""); setEditing({ id: machine.id, name: machine.name, location: machine.location ?? "", model: machine.model ?? "walk_behind_scrubber", assetTag: machine.assetTag ?? "" }); }} disabled={pending} aria-label={`Edit ${machine.name}`}><Pencil size={15} /></button>
+              <button type="button" className="icon-btn" onClick={() => { setError(""); setEditing({ id: machine.id, name: machine.name, location: machine.location ?? "", model: machine.model ?? "walk_behind_scrubber", assetTag: machine.assetTag ?? "", documentsFolderId: machine.documentsFolderId ?? "" }); }} disabled={pending} aria-label={`Edit ${machine.name}`}><Pencil size={15} /></button>
               <button type="button" className="icon-btn danger" onClick={() => { if (window.confirm(`Are you sure you want to delete "${machine.name}"? This cannot be undone.`)) run(() => deleteMachine({ id: machine.id })); }} disabled={pending} aria-label={`Delete ${machine.name}`}><Trash2 size={15} /></button>
             </> : <a className="inv-move-btn" href={`/m/${machine.id}`}>View state</a>}
           </div>
@@ -96,11 +109,12 @@ export function MachinesConsole({ machines, isAdmin, brands, brandId }: { machin
     </div>}
 
     {adding && <div className="mc-overlay" role="dialog" aria-modal="true" aria-label="Add a machine" onMouseDown={e => { if (e.target === e.currentTarget && !pending) setAdding(false); }}>
-      <form className="mc-dialog" onSubmit={e => { e.preventDefault(); if (!name.trim() || !brand) return; run(() => createMachine({ name, location: location || null, status, brandId: brand, model, assetTag: assetTag || null }), () => { setName(""); setLocation(""); setStatus("running"); setAssetTag(""); setAdding(false); }); }}>
+      <form className="mc-dialog" onSubmit={e => { e.preventDefault(); if (!name.trim() || !brand) return; run(() => createMachine({ name, location: location || null, status, brandId: brand, model, assetTag: assetTag || null, documentsFolderId: docFolder || null }), () => { setName(""); setLocation(""); setStatus("running"); setAssetTag(""); setDocFolder(""); setAdding(false); }); }}>
         <div className="mc-dialog-head"><h3>Add a machine</h3><p>Each machine gets a printable QR that opens its maintenance report (employees must sign in).</p></div>
         <div className="admin-field"><label htmlFor="mc-name">Name</label><input id="mc-name" value={name} onChange={e => setName(e.target.value)} maxLength={160} placeholder="Packing line 1" disabled={pending} autoFocus required /></div>
         <div className="admin-field"><label htmlFor="mc-model">Model</label><select id="mc-model" value={model} onChange={e => setModel(e.target.value as MachineModel)} disabled={pending}>{MACHINE_MODELS.map(m => <option key={m} value={m}>{MODEL_LABELS[m]}</option>)}</select></div>
-        <div className="admin-field"><label htmlFor="mc-brand">Brand</label><select id="mc-brand" value={brand} onChange={e => setBrand(e.target.value)} disabled={pending}>{brands.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}</select></div>
+        <div className="admin-field"><label htmlFor="mc-brand">Brand</label><select id="mc-brand" value={brand} onChange={e => { setBrand(e.target.value); setDocFolder(""); }} disabled={pending}>{brands.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}</select></div>
+        <div className="admin-field"><label htmlFor="mc-folder">Documents folder <span className="opt">(for saved versions)</span></label><select id="mc-folder" value={docFolder} onChange={e => setDocFolder(e.target.value)} disabled={pending}><option value="">No folder</option>{foldersFor(brand).map(f => <option key={f.id} value={f.id}>{folderPath(f.id)}</option>)}</select></div>
         <div className="admin-field"><label htmlFor="mc-asset">Machine ID <span className="opt">(optional)</span></label><input id="mc-asset" value={assetTag} onChange={e => setAssetTag(e.target.value)} maxLength={80} placeholder="Serial / asset tag" disabled={pending} /></div>
         <div className="admin-field"><label htmlFor="mc-loc">Location <span className="opt">(optional)</span></label><input id="mc-loc" value={location} onChange={e => setLocation(e.target.value)} maxLength={160} placeholder="Warehouse A" disabled={pending} /></div>
         <div className="admin-field"><label htmlFor="mc-status">Status</label><select id="mc-status" value={status} onChange={e => setStatus(e.target.value)} disabled={pending}>{MACHINE_STATUSES.map(s => <option key={s} value={s}>{STATUS_LABELS[s]}</option>)}</select></div>

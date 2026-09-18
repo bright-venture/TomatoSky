@@ -13,6 +13,7 @@ export type Machine = {
   brandId: string | null;
   model: MachineModel | null;
   assetTag: string | null;
+  documentsFolderId: string | null;
 };
 export type MachineResult = { ok: boolean; error?: string };
 

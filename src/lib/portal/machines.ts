@@ -32,7 +32,7 @@ function asModel(value: unknown): MachineModel | null {
 }
 
 // Create/edit/delete are admin-only (RLS also enforces has_admin_access()).
-export async function createMachine(input: { name: string; location: string | null; status: string; brandId: string | null; model: string | null; assetTag: string | null }): Promise<MachineResult> {
+export async function createMachine(input: { name: string; location: string | null; status: string; brandId: string | null; model: string | null; assetTag: string | null; documentsFolderId?: string | null }): Promise<MachineResult> {
   const { supabase } = await requireAdmin();
   const name = cleanText(input.name, 1, 160);
   const location = cleanOptional(input.location, 160);
@@ -40,10 +40,11 @@ export async function createMachine(input: { name: string; location: string | nu
   const brandId = cleanId(input.brandId);
   const model = asModel(input.model);
   const assetTag = cleanOptional(input.assetTag, 80);
+  const documentsFolderId = input.documentsFolderId ? cleanId(input.documentsFolderId) : null;
   if (!name) return { ok: false, error: "Enter a machine name (1-160 characters)." };
   if (!brandId) return { ok: false, error: "Choose a brand for this machine." };
   if (!model) return { ok: false, error: "Choose the machine model (report template)." };
-  const { data: created, error } = await supabase.from("machines").insert({ name, location, status, brand_id: brandId, model, asset_tag: assetTag }).select("id").single();
+  const { data: created, error } = await supabase.from("machines").insert({ name, location, status, brand_id: brandId, model, asset_tag: assetTag, documents_folder_id: documentsFolderId }).select("id").single();
   if (error || !created) return { ok: false, error: "Could not add the machine. Please try again." };
   // Automatically create the machine's blank maintenance report so it appears in
   // the Reports section right away. Best-effort: the machine is created regardless.
@@ -52,17 +53,18 @@ export async function createMachine(input: { name: string; location: string | nu
   return { ok: true };
 }
 
-export async function updateMachine(input: { id: string; name: string; location: string | null; model: string | null; assetTag: string | null }): Promise<MachineResult> {
+export async function updateMachine(input: { id: string; name: string; location: string | null; model: string | null; assetTag: string | null; documentsFolderId?: string | null }): Promise<MachineResult> {
   const { supabase } = await requireAdmin();
   const id = cleanId(input.id);
   const name = cleanText(input.name, 1, 160);
   const location = cleanOptional(input.location, 160);
   const model = asModel(input.model);
   const assetTag = cleanOptional(input.assetTag, 80);
+  const documentsFolderId = input.documentsFolderId ? cleanId(input.documentsFolderId) : null;
   if (!id) return { ok: false, error: "Invalid machine." };
   if (!name) return { ok: false, error: "Enter a machine name (1-160 characters)." };
   if (!model) return { ok: false, error: "Choose the machine model (report template)." };
-  const { error } = await supabase.from("machines").update({ name, location, model, asset_tag: assetTag }).eq("id", id);
+  const { error } = await supabase.from("machines").update({ name, location, model, asset_tag: assetTag, documents_folder_id: documentsFolderId }).eq("id", id);
   if (error) return { ok: false, error: "Could not update the machine. Please try again." };
   revalidatePath("/portal");
   return { ok: true };

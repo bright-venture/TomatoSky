@@ -3,7 +3,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Machine, MachineStatus } from "./machine-types";
 import type { MachineModel, MaintenanceReport, MaintenanceType, ReportStatus, ChecklistEntry, ReportSnapshot } from "./maintenance-templates";
 
-const COLS = "id, name, location, status, notes, updated_at, brand_id, model, asset_tag";
+const COLS = "id, name, location, status, notes, updated_at, brand_id, model, asset_tag, documents_folder_id";
 
 function toMachine(row: Record<string, unknown>): Machine {
   return {
@@ -16,6 +16,7 @@ function toMachine(row: Record<string, unknown>): Machine {
     brandId: (row.brand_id as string | null) ?? null,
     model: (row.model as MachineModel | null) ?? null,
     assetTag: (row.asset_tag as string | null) ?? null,
+    documentsFolderId: (row.documents_folder_id as string | null) ?? null,
   };
 }
 
