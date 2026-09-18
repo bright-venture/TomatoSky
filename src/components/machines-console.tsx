@@ -27,7 +27,8 @@ export function MachinesConsole({ machines, isAdmin, brands, brandId }: { machin
   const [adding, setAdding] = useState(false);
 
   const brandName = (id: string | null) => brands.find(b => b.id === id)?.name ?? "Unassigned";
-  const visibleMachines = machines.filter(m => !brandId || m.brandId === brandId);
+  const visibleMachines = machines.filter(m => !brandId || m.brandId === brandId)
+    .sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: "base" }));
 
   function run(action: () => Promise<MachineResult>, onDone?: () => void) {
     setError("");
