@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { Check, Pencil, Plus, Sprout, Trash2, X } from "lucide-react";
 import { createBrand, deleteBrand, updateBrand } from "@/lib/portal/brands";
 import type { Brand, BrandResult } from "@/lib/portal/brand-types";
+import { ConfirmDelete } from "./confirm-delete";
 
 // Admin-only management of the company's brands. Brands feed the portal brand
 // filter, the Overview list, and every product in Inventory.
@@ -14,6 +15,7 @@ export function BrandsConsole({ brands, productCounts }: { brands: Brand[]; prod
   const [error, setError] = useState("");
   const [name, setName] = useState("");
   const [editing, setEditing] = useState<{ id: string; name: string } | null>(null);
+  const [removing, setRemoving] = useState<Brand | null>(null);
 
   function run(action: () => Promise<BrandResult>, onDone?: () => void) {
     setError("");
@@ -25,12 +27,11 @@ export function BrandsConsole({ brands, productCounts }: { brands: Brand[]; prod
     });
   }
 
-  function confirmDelete(brand: Brand) {
+  function removeDescription(brand: Brand): string {
     const count = productCounts[brand.id] ?? 0;
-    const warning = count > 0
-      ? `Delete "${brand.name}"? This also permanently removes ${count} product${count === 1 ? "" : "s"} and their stock history. This cannot be undone.`
-      : `Delete "${brand.name}"? This cannot be undone.`;
-    if (window.confirm(warning)) run(() => deleteBrand({ id: brand.id }));
+    return count > 0
+      ? `Deleting "${brand.name}" also permanently removes ${count} product${count === 1 ? "" : "s"} and their stock history. Its locations become unassigned. This cannot be undone.`
+      : `"${brand.name}" will be permanently deleted. This cannot be undone.`;
   }
 
   return <section className="portal-panel">
@@ -56,9 +57,20 @@ export function BrandsConsole({ brands, productCounts }: { brands: Brand[]; prod
         <div className="inv-identity"><strong>{brand.name}</strong><span>{(productCounts[brand.id] ?? 0)} product{(productCounts[brand.id] ?? 0) === 1 ? "" : "s"}</span></div>
         <div className="inv-actions">
           <button type="button" className="icon-btn" onClick={() => { setError(""); setEditing({ id: brand.id, name: brand.name }); }} disabled={pending} aria-label={`Edit ${brand.name}`}><Pencil size={15} /></button>
-          <button type="button" className="icon-btn danger" onClick={() => confirmDelete(brand)} disabled={pending} aria-label={`Delete ${brand.name}`}><Trash2 size={15} /></button>
+          <button type="button" className="icon-btn danger" onClick={() => { setError(""); setRemoving(brand); }} disabled={pending} aria-label={`Delete ${brand.name}`}><Trash2 size={15} /></button>
         </div>
       </li>)}
     </ul>
+
+    <ConfirmDelete
+      open={!!removing}
+      title="Delete this brand?"
+      description={removing ? removeDescription(removing) : ""}
+      confirmWord={removing?.name ?? ""}
+      confirmLabel="Delete brand"
+      pending={pending}
+      onCancel={() => setRemoving(null)}
+      onConfirm={() => { if (removing) run(() => deleteBrand({ id: removing.id }), () => setRemoving(null)); }}
+    />
   </section>;
 }

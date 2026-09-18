@@ -2,7 +2,7 @@
 
 import "server-only";
 import { revalidatePath } from "next/cache";
-import { requireEmployee } from "@/lib/auth/employee";
+import { requireAdmin, requireEmployee } from "@/lib/auth/employee";
 import type { InventoryResult, MovementKind } from "./inventory-types";
 
 function cleanText(value: unknown, min: number, max: number): string | null {
@@ -64,7 +64,7 @@ export async function updateProduct(input: { id: string; name: string; unit: str
 }
 
 export async function deleteProduct(input: { id: string }): Promise<InventoryResult> {
-  const { supabase } = await requireEmployee();
+  const { supabase } = await requireAdmin();
   const id = cleanId(input.id);
   if (!id) return { ok: false, error: "Invalid product." };
   // Movements for this product are removed by the on delete cascade.
@@ -100,7 +100,7 @@ export async function renameLocation(input: { id: string; name: string }): Promi
 }
 
 export async function deleteLocation(input: { id: string }): Promise<InventoryResult> {
-  const { supabase } = await requireEmployee();
+  const { supabase } = await requireAdmin();
   const id = cleanId(input.id);
   if (!id) return { ok: false, error: "Invalid location." };
   const { error } = await supabase.from("stock_locations").delete().eq("id", id);
@@ -139,7 +139,7 @@ export async function recordMovement(input: { productId: string; locationId: str
 }
 
 export async function deleteMovement(input: { id: string }): Promise<InventoryResult> {
-  const { supabase } = await requireEmployee();
+  const { supabase } = await requireAdmin();
   const id = cleanId(input.id);
   if (!id) return { ok: false, error: "Invalid movement." };
   const { error } = await supabase.from("stock_movements").delete().eq("id", id);

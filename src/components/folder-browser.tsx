@@ -62,7 +62,7 @@ export function FolderBrowser({ module, folders, brandId }: { module: FolderModu
 
   function onDelete(folder: FolderRow) {
     const hasChildren = folders.some(child => child.parent_id === folder.id);
-    const message = `Delete "${folder.name}"${hasChildren ? " and everything inside it" : ""}? This cannot be undone.`;
+    const message = `Are you sure you want to delete "${folder.name}"${hasChildren ? " and everything inside it" : ""}? This cannot be undone.`;
     if (!window.confirm(message)) return;
     run(() => deleteFolder({ id: folder.id }));
   }

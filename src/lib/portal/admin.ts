@@ -117,6 +117,28 @@ export async function setEmployeeRole(input: { userId: string; role: string }): 
   return { ok: true };
 }
 
+// Permanently removes an account. Deleting the Auth user cascades to the
+// portal_members row (on delete cascade). Irreversible; the console confirms first.
+export async function removeEmployee(input: { userId: string }): Promise<AdminResult> {
+  const { claims } = await requireAdmin();
+  const userId = cleanId(input.userId);
+  if (!userId) return { ok: false, error: "Invalid employee." };
+  if (userId === claims.sub) return { ok: false, error: "You cannot remove your own account." };
+
+  const admin = tryAdminClient();
+  if (!admin) return { ok: false, error: NOT_CONFIGURED };
+
+  const { data: target } = await admin.from("portal_members").select("role, active").eq("user_id", userId).maybeSingle();
+  if (target?.role === "admin" && target.active && !(await hasAnotherActiveAdmin(admin, userId))) {
+    return { ok: false, error: "At least one active admin is required." };
+  }
+
+  const { error } = await admin.auth.admin.deleteUser(userId);
+  if (error) return { ok: false, error: "Could not remove the account. Please try again." };
+  revalidatePath("/portal");
+  return { ok: true };
+}
+
 async function hasAnotherActiveAdmin(admin: SupabaseClient, exceptUserId: string): Promise<boolean> {
   const { count } = await admin
     .from("portal_members")

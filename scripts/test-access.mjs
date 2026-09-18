@@ -28,6 +28,7 @@ test('portal database permissions', async t => {
     await db.exec(await readFile(new URL('../supabase/migrations/202609170004_machines.sql', import.meta.url), 'utf8'));
     await db.exec(await readFile(new URL('../supabase/migrations/202609170005_brands_admin.sql', import.meta.url), 'utf8'));
     await db.exec(await readFile(new URL('../supabase/migrations/202609170006_brand_scoping.sql', import.meta.url), 'utf8'));
+    await db.exec(await readFile(new URL('../supabase/migrations/202609170007_inventory_admin_delete.sql', import.meta.url), 'utf8'));
     const alice = '00000000-0000-0000-0000-000000000001';
     const bob = '00000000-0000-0000-0000-000000000002';
     const inactive = '00000000-0000-0000-0000-000000000003';
@@ -132,10 +133,38 @@ test('portal database permissions', async t => {
       const onHand = (await db.query('select on_hand from public.product_on_hand where product_id = $1', [prodId])).rows[0].on_hand;
       assert.equal(Number(onHand), 70);
     });
-    await t.test('a location with movements cannot be deleted', async () => {
-      await asUser(alice, 'aal2');
+    await t.test('a location with movements cannot be deleted (admin, blocked by restrict)', async () => {
+      await db.exec('reset role');
+      const adminL = '00000000-0000-0000-0000-00000000000a';
+      await db.query('insert into auth.users values ($1, $2)', [adminL, 'adminL@example.invalid']);
+      await db.query("insert into public.portal_members (user_id, display_name, role, active) values ($1, 'Admin L', 'admin', true)", [adminL]);
+      await asUser(adminL, 'aal2');
       const locId = (await db.query('select id from public.stock_locations limit 1')).rows[0].id;
       await assert.rejects(db.query('delete from public.stock_locations where id = $1', [locId]), /foreign key|still referenced/i);
+    });
+    await t.test('inventory deletes are admin-only; staff create but cannot delete', async () => {
+      await asUser(alice, 'aal2');
+      const brandId = (await db.query('select id from public.brands order by name limit 1')).rows[0].id;
+      const locId = (await db.query("insert into public.stock_locations (name) values ('Staff loc') returning id")).rows[0].id;
+      const prodId = (await db.query("insert into public.products (brand_id, name, unit) values ($1, 'Staff prod', 'kg') returning id", [brandId])).rows[0].id;
+      const movId = (await db.query("insert into public.stock_movements (product_id, location_id, kind, quantity) values ($1, $2, 'receipt', 5) returning id", [prodId, locId])).rows[0].id;
+      // Staff deletes are blocked by RLS: 0 rows removed, no error.
+      await db.query('delete from public.stock_movements where id = $1', [movId]);
+      assert.equal((await db.query('select * from public.stock_movements where id = $1', [movId])).rows.length, 1);
+      await db.query('delete from public.products where id = $1', [prodId]);
+      assert.equal((await db.query('select * from public.products where id = $1', [prodId])).rows.length, 1);
+      await db.query('delete from public.stock_locations where id = $1', [locId]);
+      assert.equal((await db.query('select * from public.stock_locations where id = $1', [locId])).rows.length, 1);
+      // An admin can delete them (movement, then product, then the now-unreferenced location).
+      await db.exec('reset role');
+      const adminI = '00000000-0000-0000-0000-00000000000b';
+      await db.query('insert into auth.users values ($1, $2)', [adminI, 'adminI@example.invalid']);
+      await db.query("insert into public.portal_members (user_id, display_name, role, active) values ($1, 'Admin I', 'admin', true)", [adminI]);
+      await asUser(adminI, 'aal2');
+      await db.query('delete from public.stock_movements where id = $1', [movId]);
+      await db.query('delete from public.products where id = $1', [prodId]);
+      await db.query('delete from public.stock_locations where id = $1', [locId]);
+      assert.equal((await db.query('select * from public.stock_locations where id = $1', [locId])).rows.length, 0);
     });
     await t.test('anonymous and password-only users cannot access inventory', async () => {
       await asUser(null, null, 'anon');

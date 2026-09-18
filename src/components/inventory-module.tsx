@@ -109,7 +109,7 @@ export function InventoryModule({ inventory, brands, brandId, machines, isAdmin 
               <div className="inv-actions">
                 <button type="button" className="inv-move-btn" onClick={() => startMovement(product.id)} disabled={pending}><ArrowDownToLine size={15} /> Move</button>
                 <button type="button" className="icon-btn" onClick={() => { setError(""); setEditingProduct({ id: product.id, name: product.name, unit: product.unit }); }} disabled={pending} aria-label={`Edit ${product.name}`}><Pencil size={15} /></button>
-                <button type="button" className="icon-btn danger" onClick={() => { if (window.confirm(`Delete "${product.name}" and all its stock movements? This cannot be undone.`)) run(() => deleteProduct({ id: product.id })); }} disabled={pending} aria-label={`Delete ${product.name}`}><Trash2 size={15} /></button>
+                {isAdmin && <button type="button" className="icon-btn danger" onClick={() => { if (window.confirm(`Are you sure you want to delete "${product.name}" and all its stock movements? This cannot be undone.`)) run(() => deleteProduct({ id: product.id })); }} disabled={pending} aria-label={`Delete ${product.name}`}><Trash2 size={15} /></button>}
               </div>
             </li>;
           })}
@@ -138,7 +138,7 @@ export function InventoryModule({ inventory, brands, brandId, machines, isAdmin 
           <div className="inv-identity"><strong>{loc.name}</strong><span>{loc.brandName || "Unassigned"}</span></div>
           <div className="inv-actions">
             <button type="button" className="icon-btn" onClick={() => { setError(""); setEditingLoc({ id: loc.id, name: loc.name }); }} disabled={pending} aria-label={`Rename ${loc.name}`}><Pencil size={15} /></button>
-            <button type="button" className="icon-btn danger" onClick={() => { if (window.confirm(`Delete "${loc.name}"?`)) run(() => deleteLocation({ id: loc.id })); }} disabled={pending} aria-label={`Delete ${loc.name}`}><Trash2 size={15} /></button>
+            {isAdmin && <button type="button" className="icon-btn danger" onClick={() => { if (window.confirm(`Are you sure you want to delete "${loc.name}"?`)) run(() => deleteLocation({ id: loc.id })); }} disabled={pending} aria-label={`Delete ${loc.name}`}><Trash2 size={15} /></button>}
           </div>
         </li>)}
       </ul>
@@ -165,7 +165,7 @@ export function InventoryModule({ inventory, brands, brandId, machines, isAdmin 
             <span className={`move-badge ${m.kind}`}>{m.kind === "receipt" ? <ArrowDownToLine size={16} /> : <ArrowUpFromLine size={16} />}</span>
             <div className="inv-identity"><strong>{m.productName}</strong><span>{m.locationName} · {m.occurredAt}{m.note ? ` · ${m.note}` : ""}</span></div>
             <div className="move-qty"><strong>{m.kind === "receipt" ? "+" : "−"}{formatQty(m.quantity)}</strong></div>
-            <div className="inv-actions"><button type="button" className="icon-btn danger" onClick={() => { if (window.confirm("Delete this movement? Stock totals will adjust.")) run(() => deleteMovement({ id: m.id })); }} disabled={pending} aria-label="Delete movement"><Trash2 size={15} /></button></div>
+            <div className="inv-actions">{isAdmin && <button type="button" className="icon-btn danger" onClick={() => { if (window.confirm("Are you sure you want to delete this movement? Stock totals will adjust.")) run(() => deleteMovement({ id: m.id })); }} disabled={pending} aria-label="Delete movement"><Trash2 size={15} /></button>}</div>
           </li>)}
         </ul>
       </section>

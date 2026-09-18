@@ -2,9 +2,10 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Check, Mail, ShieldCheck, UserPlus } from "lucide-react";
-import { inviteEmployee, setEmployeeActive, setEmployeeRole } from "@/lib/portal/admin";
+import { Check, Mail, ShieldCheck, Trash2, UserPlus } from "lucide-react";
+import { inviteEmployee, removeEmployee, setEmployeeActive, setEmployeeRole } from "@/lib/portal/admin";
 import type { AdminResult, Employee, PortalRole } from "@/lib/portal/admin-types";
+import { ConfirmDelete } from "./confirm-delete";
 
 export function AdminConsole({ employees, currentUserId }: { employees: Employee[]; currentUserId: string }) {
   const router = useRouter();
@@ -14,6 +15,7 @@ export function AdminConsole({ employees, currentUserId }: { employees: Employee
   const [role, setRole] = useState<PortalRole>("staff");
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  const [removing, setRemoving] = useState<Employee | null>(null);
 
   const activeAdmins = employees.filter(person => person.role === "admin" && person.active).length;
 
@@ -76,10 +78,24 @@ export function AdminConsole({ employees, currentUserId }: { employees: Employee
                 aria-label={`${person.active ? "Deactivate" : "Activate"} ${person.displayName}`}>
                 {person.active ? <><Check size={14} /> Active</> : "Inactive"}
               </button>
+              <button type="button" className="icon-btn danger" disabled={pending || isSelf || lastAdmin}
+                onClick={() => { setError(""); setRemoving(person); }}
+                aria-label={`Remove ${person.displayName}`}><Trash2 size={15} /></button>
             </div>
           </li>;
         })}
       </ul>
     </section>
+
+    <ConfirmDelete
+      open={!!removing}
+      title="Remove this account?"
+      description={removing ? `${removing.displayName}'s account and sign-in will be permanently deleted. This cannot be undone.` : ""}
+      confirmWord={removing?.displayName ?? ""}
+      confirmLabel="Remove account"
+      pending={pending}
+      onCancel={() => setRemoving(null)}
+      onConfirm={() => { if (removing) run(() => removeEmployee({ userId: removing.userId }), () => setRemoving(null)); }}
+    />
   </div>;
 }
