@@ -19,7 +19,9 @@ export function MachineState({ machine, reports, defaultTechnician, isAdmin }: {
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
-  const [open, setOpen] = useState(false);
+  // Open the blank report straight away when the machine has no reports yet, so a
+  // scanned QR shows the fillable form immediately instead of an extra button.
+  const [open, setOpen] = useState(reports.length === 0);
   const template = machine.model ? TEMPLATES[machine.model] : null;
 
   function removeReport(id: string) {
