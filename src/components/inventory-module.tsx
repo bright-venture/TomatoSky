@@ -40,6 +40,11 @@ export function InventoryModule({ inventory, brands, brandId, machines, isAdmin 
   const [mNote, setMNote] = useState("");
 
   const visibleProducts = useMemo(() => inventory.products.filter(p => !brandId || p.brandId === brandId), [inventory.products, brandId]);
+  const visibleLocations = useMemo(() => inventory.locations.filter(l => !brandId || l.brandId === brandId), [inventory.locations, brandId]);
+  // Movements are scoped through their product's brand.
+  const productBrand = useMemo(() => new Map(inventory.products.map(p => [p.id, p.brandId])), [inventory.products]);
+  const visibleMovements = useMemo(() => inventory.movements.filter(m => !brandId || productBrand.get(m.productId) === brandId), [inventory.movements, productBrand, brandId]);
+  const [locBrand, setLocBrand] = useState(brandId || brands[0]?.id || "");
 
   function run(action: () => Promise<InventoryResult>, onDone?: () => void) {
     setError("");
@@ -113,14 +118,15 @@ export function InventoryModule({ inventory, brands, brandId, machines, isAdmin 
     </>}
 
     {tab === "locations" && <section className="portal-panel">
-      <div className="panel-heading"><div><h2>Stock locations</h2><p>Warehouses, cold rooms, or any place stock is held.</p></div></div>
-      <form className="inv-form single" onSubmit={e => { e.preventDefault(); if (!locName.trim()) return; run(() => createLocation({ name: locName }), () => setLocName("")); }}>
+      <div className="panel-heading"><div><h2>Stock locations</h2><p>Warehouses, cold rooms, or any place stock is held. Each belongs to a brand.</p></div></div>
+      <form className="inv-form" onSubmit={e => { e.preventDefault(); if (!locName.trim() || !locBrand) return; run(() => createLocation({ name: locName, brandId: locBrand }), () => setLocName("")); }}>
         <div className="admin-field"><label htmlFor="loc-name">New location</label><input id="loc-name" value={locName} onChange={e => setLocName(e.target.value)} maxLength={120} placeholder="Main cold room" disabled={pending} required /></div>
-        <button className="folder-add" disabled={pending || !locName.trim()}><Plus size={16} /> Add location</button>
+        <div className="admin-field"><label htmlFor="loc-brand">Brand</label><select id="loc-brand" value={locBrand} onChange={e => setLocBrand(e.target.value)} disabled={pending}>{brands.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}</select></div>
+        <button className="folder-add" disabled={pending || !locName.trim() || !locBrand}><Plus size={16} /> Add location</button>
       </form>
       <ul className="inv-list">
-        {inventory.locations.length === 0 && <li className="inv-empty">No locations yet. Add one above.</li>}
-        {inventory.locations.map(loc => editingLoc?.id === loc.id ? <li key={loc.id} className="inv-row">
+        {visibleLocations.length === 0 && <li className="inv-empty">No locations yet. Add one above.</li>}
+        {visibleLocations.map(loc => editingLoc?.id === loc.id ? <li key={loc.id} className="inv-row">
           <span className="inv-icon"><MapPin size={19} /></span>
           <div className="inv-edit">
             <input value={editingLoc.name} onChange={e => setEditingLoc({ id: loc.id, name: e.target.value })} maxLength={120} disabled={pending} aria-label="Location name" />
@@ -129,7 +135,7 @@ export function InventoryModule({ inventory, brands, brandId, machines, isAdmin 
           </div>
         </li> : <li key={loc.id} className="inv-row">
           <span className="inv-icon"><MapPin size={19} /></span>
-          <div className="inv-identity"><strong>{loc.name}</strong></div>
+          <div className="inv-identity"><strong>{loc.name}</strong><span>{loc.brandName || "Unassigned"}</span></div>
           <div className="inv-actions">
             <button type="button" className="icon-btn" onClick={() => { setError(""); setEditingLoc({ id: loc.id, name: loc.name }); }} disabled={pending} aria-label={`Rename ${loc.name}`}><Pencil size={15} /></button>
             <button type="button" className="icon-btn danger" onClick={() => { if (window.confirm(`Delete "${loc.name}"?`)) run(() => deleteLocation({ id: loc.id })); }} disabled={pending} aria-label={`Delete ${loc.name}`}><Trash2 size={15} /></button>
@@ -143,8 +149,8 @@ export function InventoryModule({ inventory, brands, brandId, machines, isAdmin 
         <div className="panel-heading"><div><h2>Record a movement</h2><p>Receipts add stock; dispatches remove it.</p></div></div>
         <form className="inv-form movement" onSubmit={e => { e.preventDefault(); run(() => recordMovement({ productId: mProduct, locationId: mLocation, kind: mKind, quantity: mQty, note: mNote || null, occurredAt: mDate }), () => { setMQty(""); setMNote(""); }); }}>
           <div className="admin-field"><label htmlFor="m-kind">Type</label><select id="m-kind" value={mKind} onChange={e => setMKind(e.target.value as MovementKind)} disabled={pending}><option value="receipt">Receipt (in)</option><option value="dispatch">Dispatch (out)</option></select></div>
-          <div className="admin-field"><label htmlFor="m-product">Product</label><select id="m-product" value={mProduct} onChange={e => setMProduct(e.target.value)} disabled={pending} required><option value="">Choose…</option>{inventory.products.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select></div>
-          <div className="admin-field"><label htmlFor="m-location">Location</label><select id="m-location" value={mLocation} onChange={e => setMLocation(e.target.value)} disabled={pending} required><option value="">Choose…</option>{inventory.locations.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}</select></div>
+          <div className="admin-field"><label htmlFor="m-product">Product</label><select id="m-product" value={mProduct} onChange={e => setMProduct(e.target.value)} disabled={pending} required><option value="">Choose…</option>{visibleProducts.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select></div>
+          <div className="admin-field"><label htmlFor="m-location">Location</label><select id="m-location" value={mLocation} onChange={e => setMLocation(e.target.value)} disabled={pending} required><option value="">Choose…</option>{visibleLocations.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}</select></div>
           <div className="admin-field"><label htmlFor="m-qty">Quantity</label><input id="m-qty" type="number" min="0" step="any" value={mQty} onChange={e => setMQty(e.target.value)} placeholder="0" disabled={pending} required /></div>
           <div className="admin-field"><label htmlFor="m-date">Date</label><input id="m-date" type="date" value={mDate} onChange={e => setMDate(e.target.value)} disabled={pending} required /></div>
           <div className="admin-field wide"><label htmlFor="m-note">Note <span className="opt">(optional)</span></label><input id="m-note" value={mNote} onChange={e => setMNote(e.target.value)} maxLength={400} placeholder="Supplier, PO number…" disabled={pending} /></div>
@@ -154,8 +160,8 @@ export function InventoryModule({ inventory, brands, brandId, machines, isAdmin 
       <section className="portal-panel">
         <div className="panel-heading"><div><h2>Recent movements</h2><p>Most recent first (up to 200).</p></div></div>
         <ul className="inv-list">
-          {inventory.movements.length === 0 && <li className="inv-empty">No movements recorded yet.</li>}
-          {inventory.movements.map(m => <li key={m.id} className="inv-row movement-row">
+          {visibleMovements.length === 0 && <li className="inv-empty">No movements recorded yet.</li>}
+          {visibleMovements.map(m => <li key={m.id} className="inv-row movement-row">
             <span className={`move-badge ${m.kind}`}>{m.kind === "receipt" ? <ArrowDownToLine size={16} /> : <ArrowUpFromLine size={16} />}</span>
             <div className="inv-identity"><strong>{m.productName}</strong><span>{m.locationName} · {m.occurredAt}{m.note ? ` · ${m.note}` : ""}</span></div>
             <div className="move-qty"><strong>{m.kind === "receipt" ? "+" : "−"}{formatQty(m.quantity)}</strong></div>
@@ -165,6 +171,6 @@ export function InventoryModule({ inventory, brands, brandId, machines, isAdmin 
       </section>
     </>}
 
-    {tab === "machines" && <MachinesConsole machines={machines} isAdmin={isAdmin} />}
+    {tab === "machines" && <MachinesConsole machines={machines} isAdmin={isAdmin} brands={brands} brandId={brandId} />}
   </div>;
 }

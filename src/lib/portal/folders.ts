@@ -21,7 +21,7 @@ function cleanId(value: unknown): string | null {
 
 // Every action re-checks identity, active membership, and MFA on the server.
 // The client only ever sends ids and the requested change; RLS is the boundary.
-export async function createFolder(input: { module: string; name: string; parentId: string | null }): Promise<FolderResult> {
+export async function createFolder(input: { module: string; name: string; parentId: string | null; brandId?: string | null }): Promise<FolderResult> {
   const { supabase } = await requireEmployee();
   if (!isModule(input.module)) return { ok: false, error: "Unknown section." };
   const name = cleanName(input.name);
@@ -29,13 +29,19 @@ export async function createFolder(input: { module: string; name: string; parent
   const parentId = input.parentId ? cleanId(input.parentId) : null;
   if (input.parentId && !parentId) return { ok: false, error: "Invalid destination folder." };
 
+  // A subfolder inherits its parent's brand; a top-level folder needs one chosen.
+  let brandId: string | null = null;
   if (parentId) {
-    const { data: parent, error } = await supabase.from("portal_folders").select("id, module").eq("id", parentId).maybeSingle();
+    const { data: parent, error } = await supabase.from("portal_folders").select("id, module, brand_id").eq("id", parentId).maybeSingle();
     if (error) return { ok: false, error: "Could not verify the destination folder." };
     if (!parent || parent.module !== input.module) return { ok: false, error: "The destination folder is invalid." };
+    brandId = (parent.brand_id as string | null) ?? null;
+  } else {
+    brandId = cleanId(input.brandId);
+    if (!brandId) return { ok: false, error: "Choose a brand for this folder." };
   }
 
-  const { error } = await supabase.from("portal_folders").insert({ module: input.module, name, parent_id: parentId });
+  const { error } = await supabase.from("portal_folders").insert({ module: input.module, name, parent_id: parentId, brand_id: brandId });
   if (error) return { ok: false, error: "Could not create the folder. Please try again." };
   revalidatePath("/portal");
   return { ok: true };

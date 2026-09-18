@@ -10,17 +10,18 @@ function toMachine(row: Record<string, unknown>): Machine {
     status: row.status as MachineStatus,
     notes: (row.notes as string | null) ?? null,
     updatedAt: row.updated_at as string,
+    brandId: (row.brand_id as string | null) ?? null,
   };
 }
 
 // All machines, scoped by the caller's RLS. Non-fatal: empty if not migrated yet.
 export async function getMachines(supabase: SupabaseClient): Promise<Machine[]> {
-  const { data } = await supabase.from("machines").select("id, name, location, status, notes, updated_at").order("name");
+  const { data } = await supabase.from("machines").select("id, name, location, status, notes, updated_at, brand_id").order("name");
   return (data ?? []).map(toMachine);
 }
 
 // A single machine for the scanned state page. Null if missing or not permitted.
 export async function getMachine(supabase: SupabaseClient, id: string): Promise<Machine | null> {
-  const { data } = await supabase.from("machines").select("id, name, location, status, notes, updated_at").eq("id", id).maybeSingle();
+  const { data } = await supabase.from("machines").select("id, name, location, status, notes, updated_at, brand_id").eq("id", id).maybeSingle();
   return data ? toMachine(data) : null;
 }

@@ -8,6 +8,7 @@ export type Machine = {
   status: MachineStatus;
   notes: string | null;
   updatedAt: string;
+  brandId: string | null;
 };
 export type MachineResult = { ok: boolean; error?: string };
 

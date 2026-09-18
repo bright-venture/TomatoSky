@@ -1,7 +1,7 @@
 // Shared types for the Inventory module. Kept out of the "use server" actions file.
 export type MovementKind = "receipt" | "dispatch";
 export type Product = { id: string; brandId: string; brandName: string; name: string; unit: string };
-export type StockLocation = { id: string; name: string };
+export type StockLocation = { id: string; name: string; brandId: string | null; brandName: string };
 export type Movement = {
   id: string;
   productId: string;

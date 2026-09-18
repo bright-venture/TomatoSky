@@ -16,7 +16,7 @@ export default async function PortalPage() {
   const role = member.role as PortalRole;
   const [{ data: brands, error: brandsError }, folderResult] = await Promise.all([
     supabase.from("brands").select("id, slug, name").order("name"),
-    supabase.from("portal_folders").select("id, module, parent_id, name").order("name"),
+    supabase.from("portal_folders").select("id, module, parent_id, name, brand_id").order("name"),
   ]);
   if (brandsError) redirect("/auth/access?reason=unavailable");
   // Folders are non-fatal: if the portal_folders migration has not been applied

@@ -75,11 +75,13 @@ export async function deleteProduct(input: { id: string }): Promise<InventoryRes
 }
 
 // Locations -----------------------------------------------------------------
-export async function createLocation(input: { name: string }): Promise<InventoryResult> {
+export async function createLocation(input: { name: string; brandId: string | null }): Promise<InventoryResult> {
   const { supabase } = await requireEmployee();
   const name = cleanText(input.name, 1, 120);
+  const brandId = cleanId(input.brandId);
   if (!name) return { ok: false, error: "Enter a location name (1–120 characters)." };
-  const { error } = await supabase.from("stock_locations").insert({ name });
+  if (!brandId) return { ok: false, error: "Choose a brand for this location." };
+  const { error } = await supabase.from("stock_locations").insert({ name, brand_id: brandId });
   if (error) return { ok: false, error: "Could not add the location. Please try again." };
   revalidatePath("/portal");
   return { ok: true };

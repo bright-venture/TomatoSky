@@ -9,15 +9,21 @@ import { MACHINE_STATUSES, STATUS_LABELS, type Machine, type MachineResult } fro
 
 const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? "";
 
-export function MachinesConsole({ machines, isAdmin }: { machines: Machine[]; isAdmin: boolean }) {
+type Brand = { id: string; name: string };
+
+export function MachinesConsole({ machines, isAdmin, brands, brandId }: { machines: Machine[]; isAdmin: boolean; brands: Brand[]; brandId: string }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState("");
   const [name, setName] = useState("");
   const [location, setLocation] = useState("");
   const [status, setStatus] = useState("running");
+  const [brand, setBrand] = useState(brandId || brands[0]?.id || "");
   const [editing, setEditing] = useState<{ id: string; name: string; location: string } | null>(null);
   const [qr, setQr] = useState<Machine | null>(null);
+
+  const brandName = (id: string | null) => brands.find(b => b.id === id)?.name ?? "Unassigned";
+  const visibleMachines = machines.filter(m => !brandId || m.brandId === brandId);
 
   function run(action: () => Promise<MachineResult>, onDone?: () => void) {
     setError("");
@@ -35,19 +41,20 @@ export function MachinesConsole({ machines, isAdmin }: { machines: Machine[]; is
     {error && <p className="folder-error" role="alert">{error}</p>}
     {isAdmin && <section className="portal-panel">
       <div className="panel-heading"><div><h2>Add a machine</h2><p>Each machine gets a printable QR that opens its live state page (employees must sign in).</p></div></div>
-      <form className="inv-form" onSubmit={e => { e.preventDefault(); if (!name.trim()) return; run(() => createMachine({ name, location: location || null, status }), () => { setName(""); setLocation(""); setStatus("running"); }); }}>
+      <form className="inv-form" onSubmit={e => { e.preventDefault(); if (!name.trim() || !brand) return; run(() => createMachine({ name, location: location || null, status, brandId: brand }), () => { setName(""); setLocation(""); setStatus("running"); }); }}>
         <div className="admin-field"><label htmlFor="mc-name">Name</label><input id="mc-name" value={name} onChange={e => setName(e.target.value)} maxLength={160} placeholder="Packing line 1" disabled={pending} required /></div>
+        <div className="admin-field"><label htmlFor="mc-brand">Brand</label><select id="mc-brand" value={brand} onChange={e => setBrand(e.target.value)} disabled={pending}>{brands.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}</select></div>
         <div className="admin-field"><label htmlFor="mc-loc">Location <span className="opt">(optional)</span></label><input id="mc-loc" value={location} onChange={e => setLocation(e.target.value)} maxLength={160} placeholder="Warehouse A" disabled={pending} /></div>
         <div className="admin-field"><label htmlFor="mc-status">Status</label><select id="mc-status" value={status} onChange={e => setStatus(e.target.value)} disabled={pending}>{MACHINE_STATUSES.map(s => <option key={s} value={s}>{STATUS_LABELS[s]}</option>)}</select></div>
-        <button className="folder-add" disabled={pending || !name.trim()}><Plus size={16} /> Add machine</button>
+        <button className="folder-add" disabled={pending || !name.trim() || !brand}><Plus size={16} /> Add machine</button>
       </form>
     </section>}
 
     <section className="portal-panel">
-      <div className="panel-heading"><div><h2>Machines</h2><p>{machines.length} {machines.length === 1 ? "machine" : "machines"}</p></div></div>
+      <div className="panel-heading"><div><h2>Machines</h2><p>{visibleMachines.length} {visibleMachines.length === 1 ? "machine" : "machines"}{brandId ? " in this brand" : ""}</p></div></div>
       <ul className="inv-list">
-        {machines.length === 0 && <li className="inv-empty">No machines yet. Add one above.</li>}
-        {machines.map(machine => editing?.id === machine.id ? <li key={machine.id} className="inv-row">
+        {visibleMachines.length === 0 && <li className="inv-empty">No machines yet. Add one above.</li>}
+        {visibleMachines.map(machine => editing?.id === machine.id ? <li key={machine.id} className="inv-row">
           <span className="inv-icon"><Cpu size={19} /></span>
           <div className="inv-edit">
             <input value={editing.name} onChange={e => setEditing({ ...editing, name: e.target.value })} maxLength={160} placeholder="Name" disabled={pending} aria-label="Machine name" />
@@ -57,7 +64,7 @@ export function MachinesConsole({ machines, isAdmin }: { machines: Machine[]; is
           </div>
         </li> : <li key={machine.id} className="inv-row">
           <span className="inv-icon"><Cpu size={19} /></span>
-          <div className="inv-identity"><strong>{machine.name}</strong><span>{machine.location ?? "No location"}</span></div>
+          <div className="inv-identity"><strong>{machine.name}</strong><span>{brandName(machine.brandId)} · {machine.location ?? "No location"}</span></div>
           <span className={`status-badge ${machine.status}`}>{STATUS_LABELS[machine.status]}</span>
           <div className="inv-actions">
             {isAdmin ? <>

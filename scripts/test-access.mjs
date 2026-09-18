@@ -27,6 +27,7 @@ test('portal database permissions', async t => {
     await db.exec(await readFile(new URL('../supabase/migrations/202609170003_inventory.sql', import.meta.url), 'utf8'));
     await db.exec(await readFile(new URL('../supabase/migrations/202609170004_machines.sql', import.meta.url), 'utf8'));
     await db.exec(await readFile(new URL('../supabase/migrations/202609170005_brands_admin.sql', import.meta.url), 'utf8'));
+    await db.exec(await readFile(new URL('../supabase/migrations/202609170006_brand_scoping.sql', import.meta.url), 'utf8'));
     const alice = '00000000-0000-0000-0000-000000000001';
     const bob = '00000000-0000-0000-0000-000000000002';
     const inactive = '00000000-0000-0000-0000-000000000003';
@@ -201,6 +202,27 @@ test('portal database permissions', async t => {
       await asUser(adminB, 'aal2');
       await db.query('delete from public.brands where id = $1', [brandId]);
       assert.equal((await db.query('select * from public.brands where id = $1', [brandId])).rows.length, 0);
+    });
+    await t.test('deleting a brand cascades to its folders and machines, and unassigns its locations', async () => {
+      await db.exec('reset role');
+      const adminC = '00000000-0000-0000-0000-000000000009';
+      await db.query('insert into auth.users values ($1, $2)', [adminC, 'admin9@example.invalid']);
+      await db.query("insert into public.portal_members (user_id, display_name, role, active) values ($1, 'Admin nine', 'admin', true)", [adminC]);
+      await asUser(adminC, 'aal2');
+      const brandId = (await db.query("insert into public.brands (slug, name) values ('scoped', 'Scoped Brand') returning id")).rows[0].id;
+      await db.query("insert into public.portal_folders (module, name, brand_id) values ('documents', 'Brand doc', $1)", [brandId]);
+      await db.query("insert into public.machines (name, brand_id) values ('Brand machine', $1)", [brandId]);
+      const locId = (await db.query("insert into public.stock_locations (name, brand_id) values ('Brand cold room', $1) returning id", [brandId])).rows[0].id;
+      const prodId = (await db.query("insert into public.products (brand_id, name, unit) values ($1, 'Scoped tomato', 'kg') returning id", [brandId])).rows[0].id;
+      await db.query("insert into public.stock_movements (product_id, location_id, kind, quantity) values ($1, $2, 'receipt', 10)", [prodId, locId]);
+      // Deleting the brand must succeed even though the location is referenced by a
+      // movement (restrict): the location is unassigned, not deleted, so no conflict.
+      await db.query('delete from public.brands where id = $1', [brandId]);
+      assert.equal((await db.query('select * from public.portal_folders where brand_id = $1', [brandId])).rows.length, 0);
+      assert.equal((await db.query('select * from public.machines where brand_id = $1', [brandId])).rows.length, 0);
+      assert.equal((await db.query('select * from public.products where id = $1', [prodId])).rows.length, 0);
+      assert.equal((await db.query('select * from public.stock_movements where product_id = $1', [prodId])).rows.length, 0);
+      assert.equal((await db.query('select brand_id from public.stock_locations where id = $1', [locId])).rows[0].brand_id, null);
     });
     await t.test('deactivation blocks an already issued MFA identity on the next query', async () => {
       await db.exec('reset role');

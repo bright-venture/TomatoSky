@@ -6,7 +6,7 @@ import { ArrowRightLeft, Check, Folder, FolderPlus, Pencil, Trash2, X } from "lu
 import { createFolder, deleteFolder, moveFolder, renameFolder } from "@/lib/portal/folders";
 import type { Folder as FolderRow, FolderModule, FolderResult } from "@/lib/portal/folder-types";
 
-export function FolderBrowser({ module, folders }: { module: FolderModule; folders: FolderRow[] }) {
+export function FolderBrowser({ module, folders, brandId }: { module: FolderModule; folders: FolderRow[]; brandId: string }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [currentId, setCurrentId] = useState<string | null>(null);
@@ -57,7 +57,7 @@ export function FolderBrowser({ module, folders }: { module: FolderModule; folde
   function submitCreate(event: React.FormEvent) {
     event.preventDefault();
     if (!newName.trim()) return;
-    run(() => createFolder({ module, name: newName, parentId: activeId }), () => setNewName(""));
+    run(() => createFolder({ module, name: newName, parentId: activeId, brandId: activeId ? null : brandId }), () => setNewName(""));
   }
 
   function onDelete(folder: FolderRow) {

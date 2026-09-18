@@ -61,9 +61,9 @@ export function PortalWorkspace({ brands, folders, role, currentUserId, employee
         {section === "Overview" ? <>
           <div className="metric-grid">
             {[
-              { label: "Products", icon: Package, value: inventory.products.length, hint: "in catalog" },
-              { label: "Stock locations", icon: Warehouse, value: inventory.locations.length, hint: "tracked" },
-              { label: "Document folders", icon: FileText, value: folders.filter(folder => folder.module === "documents").length, hint: "organized" },
+              { label: "Products", icon: Package, value: inventory.products.filter(product => !brandId || product.brandId === brandId).length, hint: "in catalog" },
+              { label: "Stock locations", icon: Warehouse, value: inventory.locations.filter(location => !brandId || location.brandId === brandId).length, hint: "tracked" },
+              { label: "Document folders", icon: FileText, value: folders.filter(folder => folder.module === "documents" && (!brandId || folder.brand_id === brandId)).length, hint: "organized" },
             ].map(({ label, icon: Icon, value, hint }) => <article className="metric" key={label}><div><span>{label}</span><Icon size={19} /></div><strong>{value}</strong><small>{value === 0 ? "None yet" : hint}</small></article>)}
           </div>
           <section className="portal-panel">
@@ -78,7 +78,10 @@ export function PortalWorkspace({ brands, folders, role, currentUserId, employee
             </div>
           </section>
           <section className="portal-panel getting-started"><div><p className="eyebrow">YOUR WORKSPACE</p><h2>Welcome to your workspace.</h2><p>Your employee account is connected. Next, we will set up products, locations, and opening stock for your brands.</p></div><span className="foundation-icon"><Sprout size={44} strokeWidth={1.2} /></span></section>
-        </> : section === "Inventory" ? <InventoryModule inventory={inventory} brands={brands} brandId={brandId} machines={machines} isAdmin={role === "admin"} /> : folderModule ? <FolderBrowser key={folderModule} module={folderModule} folders={folders.filter(folder => folder.module === folderModule)} /> : section === "Administration" && role === "admin" ? <AdministrationConsole brands={brands} productCounts={productCounts} employees={employees} currentUserId={currentUserId} /> : <section className="portal-panel empty-state"><span className="empty-icon"><SectionIcon size={31} strokeWidth={1.4} /></span><p className="eyebrow">{brandName.toUpperCase()}</p><h2>{details[section].title}</h2><p>{details[section].body}</p><span className="coming-label">Not available yet</span></section>}
+        </> : section === "Inventory" ? <InventoryModule inventory={inventory} brands={brands} brandId={brandId} machines={machines} isAdmin={role === "admin"} /> : folderModule ? (brandId
+          ? <FolderBrowser key={folderModule + brandId} module={folderModule} folders={folders.filter(folder => folder.module === folderModule && folder.brand_id === brandId)} brandId={brandId} />
+          : <section className="portal-panel empty-state"><span className="empty-icon"><SectionIcon size={31} strokeWidth={1.4} /></span><p className="eyebrow">{section.toUpperCase()}</p><h2>Choose a brand</h2><p>{section} are organized per brand. Select a brand from the menu above to view and manage its {section.toLowerCase()}.</p></section>
+        ) : section === "Administration" && role === "admin" ? <AdministrationConsole brands={brands} productCounts={productCounts} employees={employees} currentUserId={currentUserId} /> : <section className="portal-panel empty-state"><span className="empty-icon"><SectionIcon size={31} strokeWidth={1.4} /></span><p className="eyebrow">{brandName.toUpperCase()}</p><h2>{details[section].title}</h2><p>{details[section].body}</p><span className="coming-label">Not available yet</span></section>}
       </main>
     </div>
   </div>;

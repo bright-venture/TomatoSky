@@ -27,13 +27,15 @@ function asStatus(value: unknown): MachineStatus | null {
 }
 
 // Create/edit/delete are admin-only (RLS also enforces has_admin_access()).
-export async function createMachine(input: { name: string; location: string | null; status: string }): Promise<MachineResult> {
+export async function createMachine(input: { name: string; location: string | null; status: string; brandId: string | null }): Promise<MachineResult> {
   const { supabase } = await requireAdmin();
   const name = cleanText(input.name, 1, 160);
   const location = cleanOptional(input.location, 160);
   const status = asStatus(input.status) ?? "running";
+  const brandId = cleanId(input.brandId);
   if (!name) return { ok: false, error: "Enter a machine name (1–160 characters)." };
-  const { error } = await supabase.from("machines").insert({ name, location, status });
+  if (!brandId) return { ok: false, error: "Choose a brand for this machine." };
+  const { error } = await supabase.from("machines").insert({ name, location, status, brand_id: brandId });
   if (error) return { ok: false, error: "Could not add the machine. Please try again." };
   revalidatePath("/portal");
   return { ok: true };
