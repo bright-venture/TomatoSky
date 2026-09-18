@@ -98,7 +98,7 @@ export function MaintenanceReportForm({ machine, template, defaultTechnician, in
     </fieldset>
 
     <div className="mr-section-title">Maintenance checklist</div>
-    <div className="mr-check-legend">Tap a mark per part — OK, Repaired, or Changed. Add a note as needed.</div>
+    <div className="mr-check-legend">Tap a mark per part: OK, Repaired, or Changed. Add a note as needed.</div>
     <div className="mr-check">
       {grouped.map(({ group, items }) => <Fragment key={group}>
         <div className="mr-group">{group}</div>

@@ -40,7 +40,7 @@ export function MachineState({ machine, report, defaultTechnician, isAdmin }: {
     <div className="mr-meta-line">
       {report?.updatedAt
         ? <span>Last edited {report.updatedAt.slice(0, 16).replace("T", " ")}{report.technicianName ? ` · ${report.technicianName}` : ""}</span>
-        : <span>New report — not saved yet.</span>}
+        : <span>New report - not saved yet.</span>}
       {isAdmin && report && <button type="button" className="icon-btn danger" onClick={removeReport} disabled={pending} aria-label="Delete report"><Trash2 size={15} /></button>}
     </div>
 

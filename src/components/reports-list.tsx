@@ -12,7 +12,7 @@ export function ReportsList({ machines, reports, brandId }: { machines: Machine[
   const visible = machines.filter(m => !brandId || m.brandId === brandId);
 
   return <section className="portal-panel">
-    <div className="panel-heading"><div><h2>Maintenance reports</h2><p>{visible.length} {visible.length === 1 ? "machine" : "machines"}{brandId ? " in this brand" : ""}. One report per machine — open it to view or edit.</p></div></div>
+    <div className="panel-heading"><div><h2>Maintenance reports</h2><p>{visible.length} {visible.length === 1 ? "machine" : "machines"}{brandId ? " in this brand" : ""}. One report per machine. Open it to view or edit.</p></div></div>
     <ul className="inv-list">
       {visible.length === 0 && <li className="inv-empty">No machines yet. Add a machine in Inventory → Machines to create its report.</li>}
       {visible.map(machine => {
@@ -27,7 +27,7 @@ export function ReportsList({ machines, reports, brandId }: { machines: Machine[
             ? <span className={`report-tag ${report.machineStatus}`}>{REPORT_STATUS_LABELS[report.machineStatus]}</span>
             : <span className="report-tag none">Not started</span>}
           <div className="inv-actions">
-            <span className="report-updated">{report?.updatedAt ? `Edited ${report.updatedAt.slice(0, 10)}` : "—"}</span>
+            <span className="report-updated">{report?.updatedAt ? `Edited ${report.updatedAt.slice(0, 10)}` : "-"}</span>
             <a className="inv-move-btn" href={`/m/${machine.id}`}>Open report <ArrowUpRight size={15} /></a>
           </div>
         </li>;

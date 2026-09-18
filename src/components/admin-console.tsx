@@ -62,7 +62,7 @@ export function AdminConsole({ employees, currentUserId }: { employees: Employee
             <span className={`employee-avatar ${person.role === "admin" ? "admin" : "staff"}`}>{person.role === "admin" ? <ShieldCheck size={18} /> : person.displayName.charAt(0).toUpperCase()}</span>
             <div className="employee-identity">
               <strong>{person.displayName}{isSelf && <span className="employee-you">You</span>}</strong>
-              <span>{person.email || "—"}</span>
+              <span>{person.email || "-"}</span>
             </div>
             <div className="employee-meta">
               <span className="employee-signin">{person.lastSignInAt ? `Last in ${person.lastSignInAt.slice(0, 10)}` : "Never signed in"}</span>

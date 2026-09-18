@@ -33,7 +33,7 @@ function slugify(name: string): string {
 export async function createBrand(input: { name: string }): Promise<BrandResult> {
   const { supabase } = await requireAdmin();
   const name = cleanName(input.name);
-  if (!name) return { ok: false, error: "Enter a brand name (1–120 characters)." };
+  if (!name) return { ok: false, error: "Enter a brand name (1-120 characters)." };
   // The slug is unique; on collision, retry with a short random suffix.
   const slug = slugify(name);
   for (let attempt = 0; attempt < 4; attempt++) {
@@ -50,7 +50,7 @@ export async function updateBrand(input: { id: string; name: string }): Promise<
   const id = cleanId(input.id);
   const name = cleanName(input.name);
   if (!id) return { ok: false, error: "Invalid brand." };
-  if (!name) return { ok: false, error: "Enter a brand name (1–120 characters)." };
+  if (!name) return { ok: false, error: "Enter a brand name (1-120 characters)." };
   const { error } = await supabase.from("brands").update({ name }).eq("id", id);
   if (error) return { ok: false, error: "Could not update the brand. Please try again." };
   revalidatePath("/portal");

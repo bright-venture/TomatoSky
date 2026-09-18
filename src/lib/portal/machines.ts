@@ -40,7 +40,7 @@ export async function createMachine(input: { name: string; location: string | nu
   const brandId = cleanId(input.brandId);
   const model = asModel(input.model);
   const assetTag = cleanOptional(input.assetTag, 80);
-  if (!name) return { ok: false, error: "Enter a machine name (1–160 characters)." };
+  if (!name) return { ok: false, error: "Enter a machine name (1-160 characters)." };
   if (!brandId) return { ok: false, error: "Choose a brand for this machine." };
   if (!model) return { ok: false, error: "Choose the machine model (report template)." };
   const { data: created, error } = await supabase.from("machines").insert({ name, location, status, brand_id: brandId, model, asset_tag: assetTag }).select("id").single();
@@ -60,7 +60,7 @@ export async function updateMachine(input: { id: string; name: string; location:
   const model = asModel(input.model);
   const assetTag = cleanOptional(input.assetTag, 80);
   if (!id) return { ok: false, error: "Invalid machine." };
-  if (!name) return { ok: false, error: "Enter a machine name (1–160 characters)." };
+  if (!name) return { ok: false, error: "Enter a machine name (1-160 characters)." };
   if (!model) return { ok: false, error: "Choose the machine model (report template)." };
   const { error } = await supabase.from("machines").update({ name, location, model, asset_tag: assetTag }).eq("id", id);
   if (error) return { ok: false, error: "Could not update the machine. Please try again." };

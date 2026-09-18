@@ -41,7 +41,7 @@ export async function createProduct(input: { brandId: string; name: string; unit
   const name = cleanText(input.name, 1, 160);
   const unit = cleanText(input.unit, 1, 20);
   if (!brandId) return { ok: false, error: "Choose a brand." };
-  if (!name) return { ok: false, error: "Enter a product name (1–160 characters)." };
+  if (!name) return { ok: false, error: "Enter a product name (1-160 characters)." };
   if (!unit) return { ok: false, error: "Enter a unit (e.g. kg, box)." };
   const { error } = await supabase.from("products").insert({ brand_id: brandId, name, unit });
   if (error) return { ok: false, error: "Could not add the product. Please try again." };
@@ -55,7 +55,7 @@ export async function updateProduct(input: { id: string; name: string; unit: str
   const name = cleanText(input.name, 1, 160);
   const unit = cleanText(input.unit, 1, 20);
   if (!id) return { ok: false, error: "Invalid product." };
-  if (!name) return { ok: false, error: "Enter a product name (1–160 characters)." };
+  if (!name) return { ok: false, error: "Enter a product name (1-160 characters)." };
   if (!unit) return { ok: false, error: "Enter a unit (e.g. kg, box)." };
   const { error } = await supabase.from("products").update({ name, unit }).eq("id", id);
   if (error) return { ok: false, error: "Could not update the product. Please try again." };
@@ -79,7 +79,7 @@ export async function createLocation(input: { name: string; brandId: string | nu
   const { supabase } = await requireEmployee();
   const name = cleanText(input.name, 1, 120);
   const brandId = cleanId(input.brandId);
-  if (!name) return { ok: false, error: "Enter a location name (1–120 characters)." };
+  if (!name) return { ok: false, error: "Enter a location name (1-120 characters)." };
   if (!brandId) return { ok: false, error: "Choose a brand for this location." };
   const { error } = await supabase.from("stock_locations").insert({ name, brand_id: brandId });
   if (error) return { ok: false, error: "Could not add the location. Please try again." };
@@ -92,7 +92,7 @@ export async function renameLocation(input: { id: string; name: string }): Promi
   const id = cleanId(input.id);
   const name = cleanText(input.name, 1, 120);
   if (!id) return { ok: false, error: "Invalid location." };
-  if (!name) return { ok: false, error: "Enter a location name (1–120 characters)." };
+  if (!name) return { ok: false, error: "Enter a location name (1-120 characters)." };
   const { error } = await supabase.from("stock_locations").update({ name }).eq("id", id);
   if (error) return { ok: false, error: "Could not rename the location. Please try again." };
   revalidatePath("/portal");
