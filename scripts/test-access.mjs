@@ -31,6 +31,7 @@ test('portal database permissions', async t => {
     await db.exec(await readFile(new URL('../supabase/migrations/202609170007_inventory_admin_delete.sql', import.meta.url), 'utf8'));
     await db.exec(await readFile(new URL('../supabase/migrations/202609170008_maintenance.sql', import.meta.url), 'utf8'));
     await db.exec(await readFile(new URL('../supabase/migrations/202609170009_reports_editable.sql', import.meta.url), 'utf8'));
+    await db.exec(await readFile(new URL('../supabase/migrations/202609170010_report_snapshots.sql', import.meta.url), 'utf8'));
     const alice = '00000000-0000-0000-0000-000000000001';
     const bob = '00000000-0000-0000-0000-000000000002';
     const inactive = '00000000-0000-0000-0000-000000000003';
@@ -284,6 +285,33 @@ test('portal database permissions', async t => {
       // Anonymous visitors cannot read reports.
       await asUser(null, null, 'anon');
       await assert.rejects(db.query('select * from public.maintenance_reports'), /permission denied/);
+    });
+    await t.test('report snapshots: technicians archive and read; only admins delete; cascade on machine delete', async () => {
+      await db.exec('reset role');
+      const adminS = '00000000-0000-0000-0000-00000000000d';
+      await db.query('insert into auth.users values ($1, $2)', [adminS, 'adminS@example.invalid']);
+      await db.query("insert into public.portal_members (user_id, display_name, role, active) values ($1, 'Admin S', 'admin', true)", [adminS]);
+      await asUser(adminS, 'aal2');
+      const brandId = (await db.query('select id from public.brands order by name limit 1')).rows[0].id;
+      const machineId = (await db.query("insert into public.machines (name, brand_id, model) values ('Scrubber S', $1, 'walk_behind_scrubber') returning id", [brandId])).rows[0].id;
+      // Staff technician archives a snapshot.
+      await asUser(alice, 'aal2');
+      const snapId = (await db.query("insert into public.maintenance_report_snapshots (machine_id, model, machine_status) values ($1, 'walk_behind_scrubber', 'operational') returning id", [machineId])).rows[0].id;
+      assert.equal((await db.query('select * from public.maintenance_report_snapshots where machine_id = $1', [machineId])).rows.length, 1);
+      // Staff cannot delete a snapshot: RLS blocks, 0 rows removed, no error.
+      await db.query('delete from public.maintenance_report_snapshots where id = $1', [snapId]);
+      assert.equal((await db.query('select * from public.maintenance_report_snapshots where id = $1', [snapId])).rows.length, 1);
+      // Admin can delete a snapshot.
+      await asUser(adminS, 'aal2');
+      await db.query('delete from public.maintenance_report_snapshots where id = $1', [snapId]);
+      assert.equal((await db.query('select * from public.maintenance_report_snapshots where id = $1', [snapId])).rows.length, 0);
+      // Deleting the machine cascades its snapshots.
+      await db.query("insert into public.maintenance_report_snapshots (machine_id, model) values ($1, 'walk_behind_scrubber')", [machineId]);
+      await db.query('delete from public.machines where id = $1', [machineId]);
+      assert.equal((await db.query('select * from public.maintenance_report_snapshots where machine_id = $1', [machineId])).rows.length, 0);
+      // Anonymous visitors cannot read snapshots.
+      await asUser(null, null, 'anon');
+      await assert.rejects(db.query('select * from public.maintenance_report_snapshots'), /permission denied/);
     });
     await t.test('deactivation blocks an already issued MFA identity on the next query', async () => {
       await db.exec('reset role');

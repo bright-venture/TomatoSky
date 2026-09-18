@@ -13,7 +13,7 @@ import type { Employee, PortalRole } from "@/lib/portal/admin-types";
 import type { Brand } from "@/lib/portal/brand-types";
 import type { Inventory } from "@/lib/portal/inventory-types";
 import type { Machine } from "@/lib/portal/machine-types";
-import type { MaintenanceReport } from "@/lib/portal/maintenance-templates";
+import type { MaintenanceReport, ReportSnapshot } from "@/lib/portal/maintenance-templates";
 
 const sections = [
   { name: "Overview", icon: LayoutDashboard },
@@ -30,7 +30,7 @@ const details: Record<Exclude<Section, "Overview">, { title: string; body: strin
   Administration: { title: "One company. The right access.", body: "Employee access currently requires an account created by your administrator and an approved membership. In-app invitations and permission management are not available yet." },
 };
 
-export function PortalWorkspace({ brands, folders, role, currentUserId, employees, inventory, machines, reports }: { brands: Brand[]; folders: Folder[]; role: PortalRole; currentUserId: string; employees: Employee[]; inventory: Inventory; machines: Machine[]; reports: MaintenanceReport[] }) {
+export function PortalWorkspace({ brands, folders, role, currentUserId, employees, inventory, machines, reports, snapshots }: { brands: Brand[]; folders: Folder[]; role: PortalRole; currentUserId: string; employees: Employee[]; inventory: Inventory; machines: Machine[]; reports: MaintenanceReport[]; snapshots: ReportSnapshot[] }) {
   const [section, setSection] = useState<Section>("Overview");
   const [brandId, setBrandId] = useState("");
   const selectedBrand = brands.find(brand => brand.id === brandId);
@@ -60,7 +60,7 @@ export function PortalWorkspace({ brands, folders, role, currentUserId, employee
           <div><p className="eyebrow">TOMATOSKY WORKSPACE</p><h1>{section}</h1><p>{section === "Overview" ? "Your brands and operations, in one place." : `Company-wide ${section.toLowerCase()}, organized around your team.`}</p></div>
           <div className="brand-select"><label htmlFor="brand-filter">Brand</label><select id="brand-filter" value={brandId} onChange={event => setBrandId(event.target.value)}><option value="">All brands</option>{brands.map(brand => <option key={brand.id} value={brand.id}>{brand.name}</option>)}</select></div>
         </div>
-        {section === "Reports" ? <ReportsList machines={machines} reports={reports} brandId={brandId} /> : section === "Overview" ? <>
+        {section === "Reports" ? <ReportsList machines={machines} reports={reports} snapshots={snapshots} brandId={brandId} isAdmin={role === "admin"} /> : section === "Overview" ? <>
           <div className="metric-grid">
             {[
               { label: "Products", icon: Package, value: inventory.products.filter(product => !brandId || product.brandId === brandId).length, hint: "in catalog" },

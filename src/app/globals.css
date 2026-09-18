@@ -218,6 +218,7 @@
 .report-tag.out_of_service{background:#f7e3df;color:#a5362c}
 .report-tag.none{background:#eef1ec;color:#7a857a}
 .report-updated{font-size:12px;color:var(--muted);white-space:nowrap}
+.report-versions{padding:12px 25px 18px;background:#fafbf9;border-top:1px solid #edf0e9}
 .mr-meta-line{display:flex;align-items:center;gap:10px;margin-top:16px;font-size:12px;color:var(--muted)}
 .mr-meta-line .icon-btn{margin-left:auto}
 @media print{body *{visibility:hidden!important}.qr-print,.qr-print *{visibility:visible!important}.qr-print{position:fixed;inset:0;margin:auto;height:max-content;box-shadow:none}}

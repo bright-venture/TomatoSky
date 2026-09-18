@@ -134,6 +134,27 @@ export type MaintenanceReport = {
   updatedAt: string | null;
 };
 
+// An archived, immutable snapshot of a report at one save.
+export type ReportSnapshot = {
+  id: string;
+  machineId: string;
+  model: MachineModel;
+  reportDate: string | null;
+  maintenanceType: MaintenanceType | null;
+  operatingHours: string | null;
+  siteLocation: string | null;
+  machineStatus: ReportStatus | null;
+  problemFound: string | null;
+  workPerformed: string | null;
+  partsReplaced: string | null;
+  partsRequired: string | null;
+  nextMaintenance: string | null;
+  technicianName: string | null;
+  checklist: Record<string, ChecklistEntry>;
+  functionTest: Record<string, boolean>;
+  savedAt: string;
+};
+
 export type ReportInput = {
   machineId: string;
   reportDate: string;

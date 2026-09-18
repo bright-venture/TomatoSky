@@ -1,7 +1,7 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Machine, MachineStatus } from "./machine-types";
-import type { MachineModel, MaintenanceReport, MaintenanceType, ReportStatus, ChecklistEntry } from "./maintenance-templates";
+import type { MachineModel, MaintenanceReport, MaintenanceType, ReportStatus, ChecklistEntry, ReportSnapshot } from "./maintenance-templates";
 
 const COLS = "id, name, location, status, notes, updated_at, brand_id, model, asset_tag";
 
@@ -66,4 +66,40 @@ export async function getMachineReport(supabase: SupabaseClient, machineId: stri
 export async function getReports(supabase: SupabaseClient): Promise<MaintenanceReport[]> {
   const { data } = await supabase.from("maintenance_reports").select("*").order("updated_at", { ascending: false });
   return (data ?? []).map(toReport);
+}
+
+function toSnapshot(row: Record<string, unknown>): ReportSnapshot {
+  return {
+    id: row.id as string,
+    machineId: row.machine_id as string,
+    model: row.model as MachineModel,
+    reportDate: (row.report_date as string | null) ?? null,
+    maintenanceType: (row.maintenance_type as MaintenanceType | null) ?? null,
+    operatingHours: (row.operating_hours as string | null) ?? null,
+    siteLocation: (row.site_location as string | null) ?? null,
+    machineStatus: (row.machine_status as ReportStatus | null) ?? null,
+    problemFound: (row.problem_found as string | null) ?? null,
+    workPerformed: (row.work_performed as string | null) ?? null,
+    partsReplaced: (row.parts_replaced as string | null) ?? null,
+    partsRequired: (row.parts_required as string | null) ?? null,
+    nextMaintenance: (row.next_maintenance as string | null) ?? null,
+    technicianName: (row.technician_name as string | null) ?? null,
+    checklist: (row.checklist as Record<string, ChecklistEntry> | null) ?? {},
+    functionTest: (row.function_test as Record<string, boolean> | null) ?? {},
+    savedAt: row.saved_at as string,
+  };
+}
+
+// Saved versions of a machine's report, newest first. Non-fatal: empty if the
+// snapshots migration has not been applied yet.
+export async function getMachineSnapshots(supabase: SupabaseClient, machineId: string): Promise<ReportSnapshot[]> {
+  const { data } = await supabase.from("maintenance_report_snapshots").select("*").eq("machine_id", machineId).order("saved_at", { ascending: false }).limit(200);
+  return (data ?? []).map(toSnapshot);
+}
+
+// All saved versions across machines, newest first, for the portal Reports
+// section. Non-fatal: empty if the snapshots migration has not been applied yet.
+export async function getSnapshots(supabase: SupabaseClient): Promise<ReportSnapshot[]> {
+  const { data } = await supabase.from("maintenance_report_snapshots").select("*").order("saved_at", { ascending: false }).limit(1000);
+  return (data ?? []).map(toSnapshot);
 }

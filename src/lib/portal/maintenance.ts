@@ -97,6 +97,27 @@ export async function saveMaintenanceReport(input: ReportInput): Promise<ReportR
     if (error) return { ok: false, error: "Could not save the report. Please try again." };
   }
 
+  // Archive a snapshot of this save (version history). Best-effort: the current
+  // report is already saved, so a snapshot failure does not fail the save.
+  await supabase.from("maintenance_report_snapshots").insert({
+    machine_id: machineId,
+    model,
+    report_date: payload.report_date,
+    maintenance_type: payload.maintenance_type,
+    operating_hours: payload.operating_hours,
+    site_location: payload.site_location,
+    machine_status: payload.machine_status,
+    problem_found: payload.problem_found,
+    work_performed: payload.work_performed,
+    parts_replaced: payload.parts_replaced,
+    parts_required: payload.parts_required,
+    next_maintenance: payload.next_maintenance,
+    technician_name: payload.technician_name,
+    checklist,
+    function_test: functionTest,
+    saved_by: claims.sub,
+  });
+
   // Keep the machine's live status in sync with the report's outcome.
   const live = machineStatus ? LIVE_STATUS[machineStatus] : null;
   if (live) await supabase.from("machines").update({ status: live, updated_at: new Date().toISOString(), updated_by: claims.sub }).eq("id", machineId);
@@ -113,6 +134,17 @@ export async function deleteMaintenanceReport(input: { id: string }): Promise<Re
   if (!id) return { ok: false, error: "Invalid report." };
   const { error } = await supabase.from("maintenance_reports").delete().eq("id", id);
   if (error) return { ok: false, error: "Could not delete the report. Please try again." };
+  revalidatePath("/portal");
+  return { ok: true };
+}
+
+// Deleting an archived version (snapshot) is admin-only.
+export async function deleteReportSnapshot(input: { id: string }): Promise<ReportResult> {
+  const { supabase } = await requireAdmin();
+  const id = cleanId(input.id);
+  if (!id) return { ok: false, error: "Invalid version." };
+  const { error } = await supabase.from("maintenance_report_snapshots").delete().eq("id", id);
+  if (error) return { ok: false, error: "Could not delete the version. Please try again." };
   revalidatePath("/portal");
   return { ok: true };
 }
