@@ -24,6 +24,7 @@ export function MachinesConsole({ machines, isAdmin, brands, brandId }: { machin
   const [assetTag, setAssetTag] = useState("");
   const [editing, setEditing] = useState<{ id: string; name: string; location: string; model: MachineModel; assetTag: string } | null>(null);
   const [qr, setQr] = useState<Machine | null>(null);
+  const [adding, setAdding] = useState(false);
 
   const brandName = (id: string | null) => brands.find(b => b.id === id)?.name ?? "Unassigned";
   const visibleMachines = machines.filter(m => !brandId || m.brandId === brandId);
@@ -41,22 +42,13 @@ export function MachinesConsole({ machines, isAdmin, brands, brandId }: { machin
   const qrUrl = qr ? `${SITE || (typeof window !== "undefined" ? window.location.origin : "")}/m/${qr.id}` : "";
 
   return <div className="machines">
-    {error && <p className="folder-error" role="alert">{error}</p>}
-    {isAdmin && <section className="portal-panel">
-      <div className="panel-heading"><div><h2>Add a machine</h2><p>Each machine gets a printable QR that opens its live state page (employees must sign in).</p></div></div>
-      <form className="inv-form" onSubmit={e => { e.preventDefault(); if (!name.trim() || !brand) return; run(() => createMachine({ name, location: location || null, status, brandId: brand, model, assetTag: assetTag || null }), () => { setName(""); setLocation(""); setStatus("running"); setAssetTag(""); }); }}>
-        <div className="admin-field"><label htmlFor="mc-name">Name</label><input id="mc-name" value={name} onChange={e => setName(e.target.value)} maxLength={160} placeholder="Packing line 1" disabled={pending} required /></div>
-        <div className="admin-field"><label htmlFor="mc-model">Model</label><select id="mc-model" value={model} onChange={e => setModel(e.target.value as MachineModel)} disabled={pending}>{MACHINE_MODELS.map(m => <option key={m} value={m}>{MODEL_LABELS[m]}</option>)}</select></div>
-        <div className="admin-field"><label htmlFor="mc-brand">Brand</label><select id="mc-brand" value={brand} onChange={e => setBrand(e.target.value)} disabled={pending}>{brands.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}</select></div>
-        <div className="admin-field"><label htmlFor="mc-asset">Machine ID <span className="opt">(optional)</span></label><input id="mc-asset" value={assetTag} onChange={e => setAssetTag(e.target.value)} maxLength={80} placeholder="Serial / asset tag" disabled={pending} /></div>
-        <div className="admin-field"><label htmlFor="mc-loc">Location <span className="opt">(optional)</span></label><input id="mc-loc" value={location} onChange={e => setLocation(e.target.value)} maxLength={160} placeholder="Warehouse A" disabled={pending} /></div>
-        <div className="admin-field"><label htmlFor="mc-status">Status</label><select id="mc-status" value={status} onChange={e => setStatus(e.target.value)} disabled={pending}>{MACHINE_STATUSES.map(s => <option key={s} value={s}>{STATUS_LABELS[s]}</option>)}</select></div>
-        <button className="folder-add" disabled={pending || !name.trim() || !brand}><Plus size={16} /> Add machine</button>
-      </form>
-    </section>}
+    {error && !adding && <p className="folder-error" role="alert">{error}</p>}
 
     <section className="portal-panel">
-      <div className="panel-heading"><div><h2>Machines</h2><p>{visibleMachines.length} {visibleMachines.length === 1 ? "machine" : "machines"}{brandId ? " in this brand" : ""}</p></div></div>
+      <div className="panel-heading">
+        <div><h2>Machines</h2><p>{visibleMachines.length} {visibleMachines.length === 1 ? "machine" : "machines"}{brandId ? " in this brand" : ""}</p></div>
+        {isAdmin && <button type="button" className="folder-add" onClick={() => { setError(""); setAdding(true); }}><Plus size={16} /> Add machine</button>}
+      </div>
       <ul className="inv-list">
         {visibleMachines.length === 0 && <li className="inv-empty">No machines yet. Add one above.</li>}
         {visibleMachines.map(machine => editing?.id === machine.id ? <li key={machine.id} className="inv-row">
@@ -100,6 +92,23 @@ export function MachinesConsole({ machines, isAdmin, brands, brandId }: { machin
           <button type="button" className="qr-close" onClick={() => setQr(null)}>Close</button>
         </div>
       </div>
+    </div>}
+
+    {adding && <div className="mc-overlay" role="dialog" aria-modal="true" aria-label="Add a machine" onMouseDown={e => { if (e.target === e.currentTarget && !pending) setAdding(false); }}>
+      <form className="mc-dialog" onSubmit={e => { e.preventDefault(); if (!name.trim() || !brand) return; run(() => createMachine({ name, location: location || null, status, brandId: brand, model, assetTag: assetTag || null }), () => { setName(""); setLocation(""); setStatus("running"); setAssetTag(""); setAdding(false); }); }}>
+        <div className="mc-dialog-head"><h3>Add a machine</h3><p>Each machine gets a printable QR that opens its maintenance report (employees must sign in).</p></div>
+        <div className="admin-field"><label htmlFor="mc-name">Name</label><input id="mc-name" value={name} onChange={e => setName(e.target.value)} maxLength={160} placeholder="Packing line 1" disabled={pending} autoFocus required /></div>
+        <div className="admin-field"><label htmlFor="mc-model">Model</label><select id="mc-model" value={model} onChange={e => setModel(e.target.value as MachineModel)} disabled={pending}>{MACHINE_MODELS.map(m => <option key={m} value={m}>{MODEL_LABELS[m]}</option>)}</select></div>
+        <div className="admin-field"><label htmlFor="mc-brand">Brand</label><select id="mc-brand" value={brand} onChange={e => setBrand(e.target.value)} disabled={pending}>{brands.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}</select></div>
+        <div className="admin-field"><label htmlFor="mc-asset">Machine ID <span className="opt">(optional)</span></label><input id="mc-asset" value={assetTag} onChange={e => setAssetTag(e.target.value)} maxLength={80} placeholder="Serial / asset tag" disabled={pending} /></div>
+        <div className="admin-field"><label htmlFor="mc-loc">Location <span className="opt">(optional)</span></label><input id="mc-loc" value={location} onChange={e => setLocation(e.target.value)} maxLength={160} placeholder="Warehouse A" disabled={pending} /></div>
+        <div className="admin-field"><label htmlFor="mc-status">Status</label><select id="mc-status" value={status} onChange={e => setStatus(e.target.value)} disabled={pending}>{MACHINE_STATUSES.map(s => <option key={s} value={s}>{STATUS_LABELS[s]}</option>)}</select></div>
+        {error && <p className="folder-error" role="alert">{error}</p>}
+        <div className="mc-actions">
+          <button type="button" className="qr-close" onClick={() => setAdding(false)} disabled={pending}>Cancel</button>
+          <button type="submit" className="folder-add" disabled={pending || !name.trim() || !brand}><Plus size={16} /> Add machine</button>
+        </div>
+      </form>
     </div>}
   </div>;
 }
