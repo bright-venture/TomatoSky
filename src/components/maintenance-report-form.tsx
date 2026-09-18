@@ -139,7 +139,7 @@ export function MaintenanceReportForm({ machine, template, defaultTechnician, in
     {error && <p className="auth-error" role="alert">{error}</p>}
     <div className="mr-actions">
       {saved && <span className="machine-saved" role="status">Saved.</span>}
-      <button type="submit" className="button button-dark" disabled={pending}>{pending ? "Saving…" : "Save report"}</button>
+      <button type="submit" className="folder-add mr-save" disabled={pending}>{pending ? "Saving…" : "Save report"}</button>
     </div>
   </form>;
 }

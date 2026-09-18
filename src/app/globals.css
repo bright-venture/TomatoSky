@@ -155,7 +155,9 @@
 .mr-state.on.changed{background:#e5eef4;color:#2f6088;border-color:#b9d3e6}
 .mr-note{grid-column:1 / -1;width:100%;border:1px solid #e2e6dd;border-radius:6px;padding:7px 10px;font:inherit;font-size:13px;color:var(--ink);background:#fbfcfa}
 .mr-note:focus{outline:2px solid #63865e;outline-offset:1px}
-.mr-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:24px}
+.mr-actions{display:flex;gap:14px;justify-content:flex-end;align-items:center;margin-top:24px}
+.mr-save{padding:11px 22px}
+.mr-actions .machine-saved{margin:0}
 .mr-history{margin-top:28px;border-top:1px solid var(--line);padding-top:20px}
 .mr-history-head{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--ink);margin-bottom:12px}
 .mr-history-head span{margin-left:auto;background:#eef2e9;color:#4e6e3a;border-radius:20px;padding:2px 10px;font-size:12px;font-weight:600}
