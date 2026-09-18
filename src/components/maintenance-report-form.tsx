@@ -2,38 +2,39 @@
 
 import { Fragment, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { submitMaintenanceReport } from "@/lib/portal/maintenance";
+import { saveMaintenanceReport } from "@/lib/portal/maintenance";
 import {
   CHECK_STATES, CHECK_STATE_LABELS, MAINTENANCE_TYPES, MAINTENANCE_TYPE_LABELS,
-  REPORT_STATUSES, REPORT_STATUS_LABELS, type Template,
+  REPORT_STATUSES, REPORT_STATUS_LABELS, type Template, type MaintenanceReport,
 } from "@/lib/portal/maintenance-templates";
 import type { Machine } from "@/lib/portal/machine-types";
 
 type Entry = { state?: string; note?: string };
 
-export function MaintenanceReportForm({ machine, template, defaultTechnician, onDone }: {
+export function MaintenanceReportForm({ machine, template, defaultTechnician, initial }: {
   machine: Machine;
   template: Template;
   defaultTechnician: string;
-  onDone: () => void;
+  initial: MaintenanceReport | null;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState("");
+  const [saved, setSaved] = useState(false);
 
-  const [technician, setTechnician] = useState(defaultTechnician);
-  const [reportDate, setReportDate] = useState(() => new Date().toISOString().slice(0, 10));
-  const [maintenanceType, setMaintenanceType] = useState<string>("");
-  const [operatingHours, setOperatingHours] = useState("");
-  const [siteLocation, setSiteLocation] = useState(machine.location ?? "");
-  const [checklist, setChecklist] = useState<Record<string, Entry>>({});
-  const [functionTest, setFunctionTest] = useState<Record<string, boolean>>({});
-  const [problemFound, setProblemFound] = useState("");
-  const [workPerformed, setWorkPerformed] = useState("");
-  const [partsReplaced, setPartsReplaced] = useState("");
-  const [partsRequired, setPartsRequired] = useState("");
-  const [nextMaintenance, setNextMaintenance] = useState("");
-  const [machineStatus, setMachineStatus] = useState<string>("");
+  const [technician, setTechnician] = useState(initial?.technicianName ?? defaultTechnician);
+  const [reportDate, setReportDate] = useState(initial?.reportDate ?? new Date().toISOString().slice(0, 10));
+  const [maintenanceType, setMaintenanceType] = useState<string>(initial?.maintenanceType ?? "");
+  const [operatingHours, setOperatingHours] = useState(initial?.operatingHours ?? "");
+  const [siteLocation, setSiteLocation] = useState(initial?.siteLocation ?? machine.location ?? "");
+  const [checklist, setChecklist] = useState<Record<string, Entry>>(initial?.checklist ?? {});
+  const [functionTest, setFunctionTest] = useState<Record<string, boolean>>(initial?.functionTest ?? {});
+  const [problemFound, setProblemFound] = useState(initial?.problemFound ?? "");
+  const [workPerformed, setWorkPerformed] = useState(initial?.workPerformed ?? "");
+  const [partsReplaced, setPartsReplaced] = useState(initial?.partsReplaced ?? "");
+  const [partsRequired, setPartsRequired] = useState(initial?.partsRequired ?? "");
+  const [nextMaintenance, setNextMaintenance] = useState(initial?.nextMaintenance ?? "");
+  const [machineStatus, setMachineStatus] = useState<string>(initial?.machineStatus ?? "");
 
   const grouped = useMemo(() => {
     const out: { group: string; items: Template["checklist"] }[] = [];
@@ -46,12 +47,14 @@ export function MaintenanceReportForm({ machine, template, defaultTechnician, on
   }, [template]);
 
   function setState(key: string, state: string) {
+    setSaved(false);
     setChecklist(prev => {
       const cur = prev[key] ?? {};
       return { ...prev, [key]: { ...cur, state: cur.state === state ? undefined : state } };
     });
   }
   function setNote(key: string, note: string) {
+    setSaved(false);
     setChecklist(prev => ({ ...prev, [key]: { ...(prev[key] ?? {}), note } }));
   }
 
@@ -59,7 +62,7 @@ export function MaintenanceReportForm({ machine, template, defaultTechnician, on
     event.preventDefault();
     setError("");
     startTransition(async () => {
-      const result = await submitMaintenanceReport({
+      const result = await saveMaintenanceReport({
         machineId: machine.id,
         reportDate,
         maintenanceType: maintenanceType || null,
@@ -76,7 +79,7 @@ export function MaintenanceReportForm({ machine, template, defaultTechnician, on
         functionTest,
       });
       if (!result.ok) { setError(result.error ?? "Could not save the report."); return; }
-      onDone();
+      setSaved(true);
       router.refresh();
     });
   }
@@ -135,8 +138,8 @@ export function MaintenanceReportForm({ machine, template, defaultTechnician, on
 
     {error && <p className="auth-error" role="alert">{error}</p>}
     <div className="mr-actions">
-      <button type="button" className="qr-close" onClick={onDone} disabled={pending}>Cancel</button>
-      <button type="submit" className="button button-dark" disabled={pending}>{pending ? "Saving…" : "Submit report"}</button>
+      {saved && <span className="machine-saved" role="status">Saved.</span>}
+      <button type="submit" className="button button-dark" disabled={pending}>{pending ? "Saving…" : "Save report"}</button>
     </div>
   </form>;
 }

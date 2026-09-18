@@ -43,8 +43,11 @@ export async function createMachine(input: { name: string; location: string | nu
   if (!name) return { ok: false, error: "Enter a machine name (1–160 characters)." };
   if (!brandId) return { ok: false, error: "Choose a brand for this machine." };
   if (!model) return { ok: false, error: "Choose the machine model (report template)." };
-  const { error } = await supabase.from("machines").insert({ name, location, status, brand_id: brandId, model, asset_tag: assetTag });
-  if (error) return { ok: false, error: "Could not add the machine. Please try again." };
+  const { data: created, error } = await supabase.from("machines").insert({ name, location, status, brand_id: brandId, model, asset_tag: assetTag }).select("id").single();
+  if (error || !created) return { ok: false, error: "Could not add the machine. Please try again." };
+  // Automatically create the machine's blank maintenance report so it appears in
+  // the Reports section right away. Best-effort: the machine is created regardless.
+  await supabase.from("maintenance_reports").insert({ machine_id: created.id, model }).select("id").maybeSingle();
   revalidatePath("/portal");
   return { ok: true };
 }

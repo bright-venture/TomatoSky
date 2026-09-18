@@ -30,6 +30,7 @@ test('portal database permissions', async t => {
     await db.exec(await readFile(new URL('../supabase/migrations/202609170006_brand_scoping.sql', import.meta.url), 'utf8'));
     await db.exec(await readFile(new URL('../supabase/migrations/202609170007_inventory_admin_delete.sql', import.meta.url), 'utf8'));
     await db.exec(await readFile(new URL('../supabase/migrations/202609170008_maintenance.sql', import.meta.url), 'utf8'));
+    await db.exec(await readFile(new URL('../supabase/migrations/202609170009_reports_editable.sql', import.meta.url), 'utf8'));
     const alice = '00000000-0000-0000-0000-000000000001';
     const bob = '00000000-0000-0000-0000-000000000002';
     const inactive = '00000000-0000-0000-0000-000000000003';
@@ -266,6 +267,9 @@ test('portal database permissions', async t => {
       await asUser(alice, 'aal2');
       const reportId = (await db.query("insert into public.maintenance_reports (machine_id, model, maintenance_type, machine_status) values ($1, 'walk_behind_scrubber', 'preventive', 'operational') returning id", [machineId])).rows[0].id;
       assert.equal((await db.query('select * from public.maintenance_reports where machine_id = $1', [machineId])).rows.length, 1);
+      // Staff CAN edit the report (update policy).
+      await db.query("update public.maintenance_reports set work_performed = 'Greased bearings' where id = $1", [reportId]);
+      assert.equal((await db.query('select work_performed from public.maintenance_reports where id = $1', [reportId])).rows[0].work_performed, 'Greased bearings');
       // Staff cannot delete: RLS blocks, 0 rows removed, no error.
       await db.query('delete from public.maintenance_reports where id = $1', [reportId]);
       assert.equal((await db.query('select * from public.maintenance_reports where id = $1', [reportId])).rows.length, 1);

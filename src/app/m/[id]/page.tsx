@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { requireEmployee } from "@/lib/auth/employee";
-import { getMachine, getMachineReports } from "@/lib/portal/machine-data";
+import { getMachine, getMachineReport } from "@/lib/portal/machine-data";
 import { MachineState } from "@/components/machine-state";
 
 export const metadata: Metadata = { title: "Machine report", robots: { index: false, follow: false } };
@@ -20,6 +20,6 @@ export default async function MachinePage({ params }: { params: Promise<{ id: st
     </div>
   </main>;
 
-  const reports = await getMachineReports(supabase, machine.id);
-  return <main className="machine-page"><MachineState machine={machine} reports={reports} defaultTechnician={member.display_name} isAdmin={member.role === "admin"} /></main>;
+  const report = await getMachineReport(supabase, machine.id);
+  return <main className="machine-page"><MachineState machine={machine} report={report} defaultTechnician={member.display_name} isAdmin={member.role === "admin"} /></main>;
 }

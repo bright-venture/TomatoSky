@@ -131,6 +131,7 @@ export type MaintenanceReport = {
   checklist: Record<string, ChecklistEntry>;
   functionTest: Record<string, boolean>;
   createdAt: string;
+  updatedAt: string | null;
 };
 
 export type ReportInput = {

@@ -32,8 +32,9 @@ const LIVE_STATUS: Record<string, "running" | "idle" | "maintenance" | "down"> =
   operational: "running", needs_maintenance: "maintenance", waiting_parts: "maintenance", out_of_service: "down",
 };
 
-// Any approved MFA employee (a technician) can submit a report for a machine.
-export async function submitMaintenanceReport(input: ReportInput): Promise<ReportResult> {
+// Any approved MFA employee (a technician) edits a machine's single living report.
+// Upserts on machine_id: the first save creates the report, later saves update it.
+export async function saveMaintenanceReport(input: ReportInput): Promise<ReportResult> {
   const { supabase, member, claims } = await requireEmployee();
   const machineId = cleanId(input.machineId);
   if (!machineId) return { ok: false, error: "Invalid machine." };
@@ -63,7 +64,7 @@ export async function submitMaintenanceReport(input: ReportInput): Promise<Repor
   }
 
   const machineStatus = inList(input.machineStatus, REPORT_STATUSES);
-  const { error } = await supabase.from("maintenance_reports").insert({
+  const { error } = await supabase.from("maintenance_reports").upsert({
     machine_id: machineId,
     model,
     report_date: cleanDate(input.reportDate) ?? new Date().toISOString().slice(0, 10),
@@ -79,7 +80,9 @@ export async function submitMaintenanceReport(input: ReportInput): Promise<Repor
     technician_name: cleanText(input.technicianName, 160) ?? member.display_name,
     checklist,
     function_test: functionTest,
-  });
+    updated_at: new Date().toISOString(),
+    updated_by: claims.sub,
+  }, { onConflict: "machine_id" });
   if (error) return { ok: false, error: "Could not save the report. Please try again." };
 
   // Keep the machine's live status in sync with the report's outcome.

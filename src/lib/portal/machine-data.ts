@@ -50,12 +50,20 @@ function toReport(row: Record<string, unknown>): MaintenanceReport {
     checklist: (row.checklist as Record<string, ChecklistEntry> | null) ?? {},
     functionTest: (row.function_test as Record<string, boolean> | null) ?? {},
     createdAt: row.created_at as string,
+    updatedAt: (row.updated_at as string | null) ?? null,
   };
 }
 
-// Maintenance reports for one machine, newest first. Non-fatal: empty if the
-// maintenance migration has not been applied yet.
-export async function getMachineReports(supabase: SupabaseClient, machineId: string): Promise<MaintenanceReport[]> {
-  const { data } = await supabase.from("maintenance_reports").select("*").eq("machine_id", machineId).order("created_at", { ascending: false }).limit(100);
+// The single living report for one machine, or null if none exists yet.
+// Non-fatal: null if the maintenance migration has not been applied yet.
+export async function getMachineReport(supabase: SupabaseClient, machineId: string): Promise<MaintenanceReport | null> {
+  const { data } = await supabase.from("maintenance_reports").select("*").eq("machine_id", machineId).order("created_at", { ascending: false }).limit(1).maybeSingle();
+  return data ? toReport(data) : null;
+}
+
+// All reports, one per machine, for the portal Reports section. Non-fatal: empty
+// if the maintenance migration has not been applied yet.
+export async function getReports(supabase: SupabaseClient): Promise<MaintenanceReport[]> {
+  const { data } = await supabase.from("maintenance_reports").select("*").order("updated_at", { ascending: false });
   return (data ?? []).map(toReport);
 }

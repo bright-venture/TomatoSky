@@ -7,11 +7,13 @@ import { SignOutButton } from "./sign-out-button";
 import { FolderBrowser } from "./folder-browser";
 import { AdministrationConsole } from "./administration-console";
 import { InventoryModule } from "./inventory-module";
+import { ReportsList } from "./reports-list";
 import { type Folder, type FolderModule } from "@/lib/portal/folder-types";
 import type { Employee, PortalRole } from "@/lib/portal/admin-types";
 import type { Brand } from "@/lib/portal/brand-types";
 import type { Inventory } from "@/lib/portal/inventory-types";
 import type { Machine } from "@/lib/portal/machine-types";
+import type { MaintenanceReport } from "@/lib/portal/maintenance-templates";
 
 const sections = [
   { name: "Overview", icon: LayoutDashboard },
@@ -28,15 +30,15 @@ const details: Record<Exclude<Section, "Overview">, { title: string; body: strin
   Administration: { title: "One company. The right access.", body: "Employee access currently requires an account created by your administrator and an approved membership. In-app invitations and permission management are not available yet." },
 };
 
-export function PortalWorkspace({ brands, folders, role, currentUserId, employees, inventory, machines }: { brands: Brand[]; folders: Folder[]; role: PortalRole; currentUserId: string; employees: Employee[]; inventory: Inventory; machines: Machine[] }) {
+export function PortalWorkspace({ brands, folders, role, currentUserId, employees, inventory, machines, reports }: { brands: Brand[]; folders: Folder[]; role: PortalRole; currentUserId: string; employees: Employee[]; inventory: Inventory; machines: Machine[]; reports: MaintenanceReport[] }) {
   const [section, setSection] = useState<Section>("Overview");
   const [brandId, setBrandId] = useState("");
   const selectedBrand = brands.find(brand => brand.id === brandId);
   const visibleBrands = brands.filter(brand => !brandId || brand.id === brandId);
   const brandName = selectedBrand?.name ?? "All brands";
   const SectionIcon = sections.find(item => item.name === section)!.icon;
-  // Documents and Reports use folders; Inventory has its own module below.
-  const folderModule = (section === "Documents" || section === "Reports") ? section.toLowerCase() as FolderModule : null;
+  // Documents uses folders; Reports lists maintenance reports; Inventory has its own module.
+  const folderModule = section === "Documents" ? "documents" as FolderModule : null;
   // Staff never see the Administration section.
   const visibleSections = role === "admin" ? sections : sections.filter(item => item.name !== "Administration");
   // Product count per brand, so the Brands console can warn before a cascading delete.
@@ -58,7 +60,7 @@ export function PortalWorkspace({ brands, folders, role, currentUserId, employee
           <div><p className="eyebrow">TOMATOSKY WORKSPACE</p><h1>{section}</h1><p>{section === "Overview" ? "Your brands and operations, in one place." : `Company-wide ${section.toLowerCase()}, organized around your team.`}</p></div>
           <div className="brand-select"><label htmlFor="brand-filter">Brand</label><select id="brand-filter" value={brandId} onChange={event => setBrandId(event.target.value)}><option value="">All brands</option>{brands.map(brand => <option key={brand.id} value={brand.id}>{brand.name}</option>)}</select></div>
         </div>
-        {section === "Overview" ? <>
+        {section === "Reports" ? <ReportsList machines={machines} reports={reports} brandId={brandId} /> : section === "Overview" ? <>
           <div className="metric-grid">
             {[
               { label: "Products", icon: Package, value: inventory.products.filter(product => !brandId || product.brandId === brandId).length, hint: "in catalog" },

@@ -209,6 +209,15 @@
 .mc-dialog-head h3{font-size:20px;color:var(--ink)}
 .mc-dialog-head p{font-size:13px;color:var(--muted);margin-top:5px;line-height:1.5}
 .mc-actions{display:flex;gap:10px;justify-content:flex-end;margin-top:4px}
+.report-tag{display:inline-flex;align-items:center;font-size:12px;font-weight:600;border-radius:20px;padding:4px 12px;flex-shrink:0}
+.report-tag.operational{background:#e8efe0;color:#3d6b45}
+.report-tag.needs_maintenance{background:#f7efd9;color:#8a6d1f}
+.report-tag.waiting_parts{background:#eef0f4;color:#566585}
+.report-tag.out_of_service{background:#f7e3df;color:#a5362c}
+.report-tag.none{background:#eef1ec;color:#7a857a}
+.report-updated{font-size:12px;color:var(--muted);white-space:nowrap}
+.mr-meta-line{display:flex;align-items:center;gap:10px;margin-top:16px;font-size:12px;color:var(--muted)}
+.mr-meta-line .icon-btn{margin-left:auto}
 @media print{body *{visibility:hidden!important}.qr-print,.qr-print *{visibility:visible!important}.qr-print{position:fixed;inset:0;margin:auto;height:max-content;box-shadow:none}}
 @media(max-width:600px){.auth-page{padding:23px 5%}.auth-header .wordmark{font-size:25px}.auth-header>a:last-child{font-size:12px}.auth-card{padding:26px;margin-top:35px}.auth-card h1{font-size:32px}.portal-header{flex-wrap:wrap;gap:14px}.portal-account{gap:10px}.portal-account>span{max-width:150px}}
 .auth-success{margin-top:24px;padding:17px;background:#edf3e9;border:1px solid #d0dfc8;border-radius:6px;color:#2e5635;font-size:15px;line-height:1.7}.auth-success p+p{margin-top:14px}.auth-support-code{font-size:12px;margin-top:8px;overflow-wrap:anywhere}
