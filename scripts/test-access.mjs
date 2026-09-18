@@ -26,6 +26,7 @@ test('portal database permissions', async t => {
     await db.exec(await readFile(new URL('../supabase/migrations/202609170002_roles_and_admin.sql', import.meta.url), 'utf8'));
     await db.exec(await readFile(new URL('../supabase/migrations/202609170003_inventory.sql', import.meta.url), 'utf8'));
     await db.exec(await readFile(new URL('../supabase/migrations/202609170004_machines.sql', import.meta.url), 'utf8'));
+    await db.exec(await readFile(new URL('../supabase/migrations/202609170005_brands_admin.sql', import.meta.url), 'utf8'));
     const alice = '00000000-0000-0000-0000-000000000001';
     const bob = '00000000-0000-0000-0000-000000000002';
     const inactive = '00000000-0000-0000-0000-000000000003';
@@ -173,10 +174,33 @@ test('portal database permissions', async t => {
       await asUser(inactive, 'aal2');
       await assert.rejects(db.query('update public.portal_members set active = true'), /permission denied/);
     });
-    await t.test('approved users cannot modify membership or brand records via API', async () => {
+    await t.test('approved staff cannot delete memberships via API', async () => {
       await asUser(alice, 'aal2');
       await assert.rejects(db.query('delete from public.portal_members'), /permission denied/);
-      await assert.rejects(db.query("update public.brands set name = 'Changed'"), /permission denied/);
+    });
+    await t.test('brands: admins create/rename/delete; staff and outsiders cannot', async () => {
+      await db.exec('reset role');
+      const adminB = '00000000-0000-0000-0000-000000000008';
+      await db.query('insert into auth.users values ($1, $2)', [adminB, 'admin8@example.invalid']);
+      await db.query("insert into public.portal_members (user_id, display_name, role, active) values ($1, 'Admin eight', 'admin', true)", [adminB]);
+      await asUser(adminB, 'aal2');
+      const brandId = (await db.query("insert into public.brands (slug, name) values ('new-brand', 'New Brand') returning id")).rows[0].id;
+      await db.query("update public.brands set name = 'Renamed Brand' where id = $1", [brandId]);
+      assert.equal((await db.query('select name from public.brands where id = $1', [brandId])).rows[0].name, 'Renamed Brand');
+      // Staff (alice) can read but RLS blocks writes: 0 rows changed, no error.
+      await asUser(alice, 'aal2');
+      await db.query("update public.brands set name = 'Hacked' where id = $1", [brandId]);
+      assert.equal((await db.query('select name from public.brands where id = $1', [brandId])).rows[0].name, 'Renamed Brand');
+      await assert.rejects(db.query("insert into public.brands (slug, name) values ('sneaky', 'Sneaky')"), /row-level security/);
+      await db.query('delete from public.brands where id = $1', [brandId]); // RLS blocks: deletes 0 rows
+      assert.equal((await db.query('select * from public.brands where id = $1', [brandId])).rows.length, 1);
+      // Outsider (approved MFA but not a member) is blocked too.
+      await asUser(outsider, 'aal2');
+      await assert.rejects(db.query("insert into public.brands (slug, name) values ('out', 'Out')"), /row-level security/);
+      // Admin can delete.
+      await asUser(adminB, 'aal2');
+      await db.query('delete from public.brands where id = $1', [brandId]);
+      assert.equal((await db.query('select * from public.brands where id = $1', [brandId])).rows.length, 0);
     });
     await t.test('deactivation blocks an already issued MFA identity on the next query', async () => {
       await db.exec('reset role');
