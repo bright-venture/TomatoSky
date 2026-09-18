@@ -6,6 +6,7 @@ import { QRCodeSVG } from "qrcode.react";
 import { Check, Cpu, Pencil, Plus, Printer, QrCode, Trash2, X } from "lucide-react";
 import { createMachine, deleteMachine, updateMachine } from "@/lib/portal/machines";
 import { MACHINE_STATUSES, STATUS_LABELS, type Machine, type MachineResult } from "@/lib/portal/machine-types";
+import { MACHINE_MODELS, MODEL_LABELS, type MachineModel } from "@/lib/portal/maintenance-templates";
 
 const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? "";
 
@@ -19,7 +20,9 @@ export function MachinesConsole({ machines, isAdmin, brands, brandId }: { machin
   const [location, setLocation] = useState("");
   const [status, setStatus] = useState("running");
   const [brand, setBrand] = useState(brandId || brands[0]?.id || "");
-  const [editing, setEditing] = useState<{ id: string; name: string; location: string } | null>(null);
+  const [model, setModel] = useState<MachineModel>("walk_behind_scrubber");
+  const [assetTag, setAssetTag] = useState("");
+  const [editing, setEditing] = useState<{ id: string; name: string; location: string; model: MachineModel; assetTag: string } | null>(null);
   const [qr, setQr] = useState<Machine | null>(null);
 
   const brandName = (id: string | null) => brands.find(b => b.id === id)?.name ?? "Unassigned";
@@ -41,9 +44,11 @@ export function MachinesConsole({ machines, isAdmin, brands, brandId }: { machin
     {error && <p className="folder-error" role="alert">{error}</p>}
     {isAdmin && <section className="portal-panel">
       <div className="panel-heading"><div><h2>Add a machine</h2><p>Each machine gets a printable QR that opens its live state page (employees must sign in).</p></div></div>
-      <form className="inv-form" onSubmit={e => { e.preventDefault(); if (!name.trim() || !brand) return; run(() => createMachine({ name, location: location || null, status, brandId: brand }), () => { setName(""); setLocation(""); setStatus("running"); }); }}>
+      <form className="inv-form" onSubmit={e => { e.preventDefault(); if (!name.trim() || !brand) return; run(() => createMachine({ name, location: location || null, status, brandId: brand, model, assetTag: assetTag || null }), () => { setName(""); setLocation(""); setStatus("running"); setAssetTag(""); }); }}>
         <div className="admin-field"><label htmlFor="mc-name">Name</label><input id="mc-name" value={name} onChange={e => setName(e.target.value)} maxLength={160} placeholder="Packing line 1" disabled={pending} required /></div>
+        <div className="admin-field"><label htmlFor="mc-model">Model</label><select id="mc-model" value={model} onChange={e => setModel(e.target.value as MachineModel)} disabled={pending}>{MACHINE_MODELS.map(m => <option key={m} value={m}>{MODEL_LABELS[m]}</option>)}</select></div>
         <div className="admin-field"><label htmlFor="mc-brand">Brand</label><select id="mc-brand" value={brand} onChange={e => setBrand(e.target.value)} disabled={pending}>{brands.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}</select></div>
+        <div className="admin-field"><label htmlFor="mc-asset">Machine ID <span className="opt">(optional)</span></label><input id="mc-asset" value={assetTag} onChange={e => setAssetTag(e.target.value)} maxLength={80} placeholder="Serial / asset tag" disabled={pending} /></div>
         <div className="admin-field"><label htmlFor="mc-loc">Location <span className="opt">(optional)</span></label><input id="mc-loc" value={location} onChange={e => setLocation(e.target.value)} maxLength={160} placeholder="Warehouse A" disabled={pending} /></div>
         <div className="admin-field"><label htmlFor="mc-status">Status</label><select id="mc-status" value={status} onChange={e => setStatus(e.target.value)} disabled={pending}>{MACHINE_STATUSES.map(s => <option key={s} value={s}>{STATUS_LABELS[s]}</option>)}</select></div>
         <button className="folder-add" disabled={pending || !name.trim() || !brand}><Plus size={16} /> Add machine</button>
@@ -58,18 +63,20 @@ export function MachinesConsole({ machines, isAdmin, brands, brandId }: { machin
           <span className="inv-icon"><Cpu size={19} /></span>
           <div className="inv-edit">
             <input value={editing.name} onChange={e => setEditing({ ...editing, name: e.target.value })} maxLength={160} placeholder="Name" disabled={pending} aria-label="Machine name" />
+            <select value={editing.model} onChange={e => setEditing({ ...editing, model: e.target.value as MachineModel })} disabled={pending} aria-label="Model">{MACHINE_MODELS.map(m => <option key={m} value={m}>{MODEL_LABELS[m]}</option>)}</select>
+            <input value={editing.assetTag} onChange={e => setEditing({ ...editing, assetTag: e.target.value })} maxLength={80} placeholder="Machine ID" disabled={pending} aria-label="Machine ID" />
             <input value={editing.location} onChange={e => setEditing({ ...editing, location: e.target.value })} maxLength={160} placeholder="Location" disabled={pending} aria-label="Location" />
-            <button className="icon-btn" disabled={pending || !editing.name.trim()} onClick={() => run(() => updateMachine({ id: machine.id, name: editing.name, location: editing.location || null }), () => setEditing(null))} aria-label="Save"><Check size={16} /></button>
+            <button className="icon-btn" disabled={pending || !editing.name.trim()} onClick={() => run(() => updateMachine({ id: machine.id, name: editing.name, location: editing.location || null, model: editing.model, assetTag: editing.assetTag || null }), () => setEditing(null))} aria-label="Save"><Check size={16} /></button>
             <button type="button" className="icon-btn" onClick={() => setEditing(null)} disabled={pending} aria-label="Cancel"><X size={16} /></button>
           </div>
         </li> : <li key={machine.id} className="inv-row">
           <span className="inv-icon"><Cpu size={19} /></span>
-          <div className="inv-identity"><strong>{machine.name}</strong><span>{brandName(machine.brandId)} · {machine.location ?? "No location"}</span></div>
+          <div className="inv-identity"><strong>{machine.name}</strong><span>{machine.model ? MODEL_LABELS[machine.model] : "No model"} · {brandName(machine.brandId)}{machine.location ? ` · ${machine.location}` : ""}</span></div>
           <span className={`status-badge ${machine.status}`}>{STATUS_LABELS[machine.status]}</span>
           <div className="inv-actions">
             {isAdmin ? <>
               <button type="button" className="inv-move-btn" onClick={() => setQr(machine)} disabled={pending}><QrCode size={15} /> QR</button>
-              <button type="button" className="icon-btn" onClick={() => { setError(""); setEditing({ id: machine.id, name: machine.name, location: machine.location ?? "" }); }} disabled={pending} aria-label={`Edit ${machine.name}`}><Pencil size={15} /></button>
+              <button type="button" className="icon-btn" onClick={() => { setError(""); setEditing({ id: machine.id, name: machine.name, location: machine.location ?? "", model: machine.model ?? "walk_behind_scrubber", assetTag: machine.assetTag ?? "" }); }} disabled={pending} aria-label={`Edit ${machine.name}`}><Pencil size={15} /></button>
               <button type="button" className="icon-btn danger" onClick={() => { if (window.confirm(`Are you sure you want to delete "${machine.name}"? This cannot be undone.`)) run(() => deleteMachine({ id: machine.id })); }} disabled={pending} aria-label={`Delete ${machine.name}`}><Trash2 size={15} /></button>
             </> : <a className="inv-move-btn" href={`/m/${machine.id}`}>View state</a>}
           </div>
@@ -82,8 +89,10 @@ export function MachinesConsole({ machines, isAdmin, brands, brandId }: { machin
         <div className="qr-print">
           <QRCodeSVG value={qrUrl} size={220} level="M" marginSize={2} />
           <strong>{qr.name}</strong>
+          {qr.model && <span>{MODEL_LABELS[qr.model]}</span>}
+          {qr.assetTag && <span>ID {qr.assetTag}</span>}
           {qr.location && <span>{qr.location}</span>}
-          <small>Scan to view machine state</small>
+          <small>Scan to open the maintenance report</small>
         </div>
         <p className="qr-url">{qrUrl}</p>
         <div className="qr-buttons">

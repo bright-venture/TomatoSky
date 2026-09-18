@@ -1,6 +1,9 @@
 import "server-only";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Machine, MachineStatus } from "./machine-types";
+import type { MachineModel, MaintenanceReport, MaintenanceType, ReportStatus, ChecklistEntry } from "./maintenance-templates";
+
+const COLS = "id, name, location, status, notes, updated_at, brand_id, model, asset_tag";
 
 function toMachine(row: Record<string, unknown>): Machine {
   return {
@@ -11,17 +14,48 @@ function toMachine(row: Record<string, unknown>): Machine {
     notes: (row.notes as string | null) ?? null,
     updatedAt: row.updated_at as string,
     brandId: (row.brand_id as string | null) ?? null,
+    model: (row.model as MachineModel | null) ?? null,
+    assetTag: (row.asset_tag as string | null) ?? null,
   };
 }
 
 // All machines, scoped by the caller's RLS. Non-fatal: empty if not migrated yet.
 export async function getMachines(supabase: SupabaseClient): Promise<Machine[]> {
-  const { data } = await supabase.from("machines").select("id, name, location, status, notes, updated_at, brand_id").order("name");
+  const { data } = await supabase.from("machines").select(COLS).order("name");
   return (data ?? []).map(toMachine);
 }
 
 // A single machine for the scanned state page. Null if missing or not permitted.
 export async function getMachine(supabase: SupabaseClient, id: string): Promise<Machine | null> {
-  const { data } = await supabase.from("machines").select("id, name, location, status, notes, updated_at, brand_id").eq("id", id).maybeSingle();
+  const { data } = await supabase.from("machines").select(COLS).eq("id", id).maybeSingle();
   return data ? toMachine(data) : null;
+}
+
+function toReport(row: Record<string, unknown>): MaintenanceReport {
+  return {
+    id: row.id as string,
+    machineId: row.machine_id as string,
+    model: row.model as MachineModel,
+    reportDate: row.report_date as string,
+    maintenanceType: (row.maintenance_type as MaintenanceType | null) ?? null,
+    operatingHours: (row.operating_hours as string | null) ?? null,
+    siteLocation: (row.site_location as string | null) ?? null,
+    machineStatus: (row.machine_status as ReportStatus | null) ?? null,
+    problemFound: (row.problem_found as string | null) ?? null,
+    workPerformed: (row.work_performed as string | null) ?? null,
+    partsReplaced: (row.parts_replaced as string | null) ?? null,
+    partsRequired: (row.parts_required as string | null) ?? null,
+    nextMaintenance: (row.next_maintenance as string | null) ?? null,
+    technicianName: (row.technician_name as string | null) ?? null,
+    checklist: (row.checklist as Record<string, ChecklistEntry> | null) ?? {},
+    functionTest: (row.function_test as Record<string, boolean> | null) ?? {},
+    createdAt: row.created_at as string,
+  };
+}
+
+// Maintenance reports for one machine, newest first. Non-fatal: empty if the
+// maintenance migration has not been applied yet.
+export async function getMachineReports(supabase: SupabaseClient, machineId: string): Promise<MaintenanceReport[]> {
+  const { data } = await supabase.from("maintenance_reports").select("*").eq("machine_id", machineId).order("created_at", { ascending: false }).limit(100);
+  return (data ?? []).map(toReport);
 }

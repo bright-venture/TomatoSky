@@ -1,15 +1,15 @@
 import type { Metadata } from "next";
 import { requireEmployee } from "@/lib/auth/employee";
-import { getMachine } from "@/lib/portal/machine-data";
+import { getMachine, getMachineReports } from "@/lib/portal/machine-data";
 import { MachineState } from "@/components/machine-state";
 
-export const metadata: Metadata = { title: "Machine state", robots: { index: false, follow: false } };
+export const metadata: Metadata = { title: "Machine report", robots: { index: false, follow: false } };
 export const dynamic = "force-dynamic";
 
 export default async function MachinePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   // Login + MFA are enforced here, so a scanned QR opens only for signed-in employees.
-  const { supabase } = await requireEmployee();
+  const { supabase, member } = await requireEmployee();
   const machine = /^[0-9a-f-]{36}$/i.test(id) ? await getMachine(supabase, id) : null;
 
   if (!machine) return <main className="machine-page">
@@ -20,5 +20,6 @@ export default async function MachinePage({ params }: { params: Promise<{ id: st
     </div>
   </main>;
 
-  return <main className="machine-page"><MachineState machine={machine} /></main>;
+  const reports = await getMachineReports(supabase, machine.id);
+  return <main className="machine-page"><MachineState machine={machine} reports={reports} defaultTechnician={member.display_name} isAdmin={member.role === "admin"} /></main>;
 }

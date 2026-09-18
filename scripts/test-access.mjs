@@ -29,6 +29,7 @@ test('portal database permissions', async t => {
     await db.exec(await readFile(new URL('../supabase/migrations/202609170005_brands_admin.sql', import.meta.url), 'utf8'));
     await db.exec(await readFile(new URL('../supabase/migrations/202609170006_brand_scoping.sql', import.meta.url), 'utf8'));
     await db.exec(await readFile(new URL('../supabase/migrations/202609170007_inventory_admin_delete.sql', import.meta.url), 'utf8'));
+    await db.exec(await readFile(new URL('../supabase/migrations/202609170008_maintenance.sql', import.meta.url), 'utf8'));
     const alice = '00000000-0000-0000-0000-000000000001';
     const bob = '00000000-0000-0000-0000-000000000002';
     const inactive = '00000000-0000-0000-0000-000000000003';
@@ -252,6 +253,33 @@ test('portal database permissions', async t => {
       assert.equal((await db.query('select * from public.products where id = $1', [prodId])).rows.length, 0);
       assert.equal((await db.query('select * from public.stock_movements where product_id = $1', [prodId])).rows.length, 0);
       assert.equal((await db.query('select brand_id from public.stock_locations where id = $1', [locId])).rows[0].brand_id, null);
+    });
+    await t.test('maintenance reports: technicians create and read; only admins delete; cascade on machine delete', async () => {
+      await db.exec('reset role');
+      const adminM = '00000000-0000-0000-0000-00000000000c';
+      await db.query('insert into auth.users values ($1, $2)', [adminM, 'adminM@example.invalid']);
+      await db.query("insert into public.portal_members (user_id, display_name, role, active) values ($1, 'Admin M', 'admin', true)", [adminM]);
+      await asUser(adminM, 'aal2');
+      const brandId = (await db.query('select id from public.brands order by name limit 1')).rows[0].id;
+      const machineId = (await db.query("insert into public.machines (name, brand_id, model) values ('Scrubber 1', $1, 'walk_behind_scrubber') returning id", [brandId])).rows[0].id;
+      // A staff technician (alice) submits a report.
+      await asUser(alice, 'aal2');
+      const reportId = (await db.query("insert into public.maintenance_reports (machine_id, model, maintenance_type, machine_status) values ($1, 'walk_behind_scrubber', 'preventive', 'operational') returning id", [machineId])).rows[0].id;
+      assert.equal((await db.query('select * from public.maintenance_reports where machine_id = $1', [machineId])).rows.length, 1);
+      // Staff cannot delete: RLS blocks, 0 rows removed, no error.
+      await db.query('delete from public.maintenance_reports where id = $1', [reportId]);
+      assert.equal((await db.query('select * from public.maintenance_reports where id = $1', [reportId])).rows.length, 1);
+      // Admin can delete.
+      await asUser(adminM, 'aal2');
+      await db.query('delete from public.maintenance_reports where id = $1', [reportId]);
+      assert.equal((await db.query('select * from public.maintenance_reports where id = $1', [reportId])).rows.length, 0);
+      // Deleting the machine cascades its reports.
+      await db.query("insert into public.maintenance_reports (machine_id, model) values ($1, 'walk_behind_scrubber')", [machineId]);
+      await db.query('delete from public.machines where id = $1', [machineId]);
+      assert.equal((await db.query('select * from public.maintenance_reports where machine_id = $1', [machineId])).rows.length, 0);
+      // Anonymous visitors cannot read reports.
+      await asUser(null, null, 'anon');
+      await assert.rejects(db.query('select * from public.maintenance_reports'), /permission denied/);
     });
     await t.test('deactivation blocks an already issued MFA identity on the next query', async () => {
       await db.exec('reset role');
