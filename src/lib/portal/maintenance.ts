@@ -64,7 +64,7 @@ export async function saveMaintenanceReport(input: ReportInput): Promise<ReportR
   }
 
   const machineStatus = inList(input.machineStatus, REPORT_STATUSES);
-  const { error } = await supabase.from("maintenance_reports").upsert({
+  const payload = {
     machine_id: machineId,
     model,
     report_date: cleanDate(input.reportDate) ?? new Date().toISOString().slice(0, 10),
@@ -82,8 +82,20 @@ export async function saveMaintenanceReport(input: ReportInput): Promise<ReportR
     function_test: functionTest,
     updated_at: new Date().toISOString(),
     updated_by: claims.sub,
-  }, { onConflict: "machine_id" });
-  if (error) return { ok: false, error: "Could not save the report. Please try again." };
+  };
+
+  // Update the machine's existing report, or create it if there is none yet.
+  // Avoids relying on ON CONFLICT so it works across migration states, and detects
+  // an RLS-blocked update (the edit policy not applied) rather than failing silently.
+  const { data: existing } = await supabase.from("maintenance_reports").select("id").eq("machine_id", machineId).maybeSingle();
+  if (existing) {
+    const { data, error } = await supabase.from("maintenance_reports").update(payload).eq("id", existing.id).select("id");
+    if (error) return { ok: false, error: "Could not save the report. Please try again." };
+    if (!data || data.length === 0) return { ok: false, error: "Saving is not enabled yet. Ask an administrator to apply the latest database update (migration 202609170009)." };
+  } else {
+    const { error } = await supabase.from("maintenance_reports").insert(payload);
+    if (error) return { ok: false, error: "Could not save the report. Please try again." };
+  }
 
   // Keep the machine's live status in sync with the report's outcome.
   const live = machineStatus ? LIVE_STATUS[machineStatus] : null;
