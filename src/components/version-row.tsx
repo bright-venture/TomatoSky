@@ -32,7 +32,13 @@ export function VersionRow({ version, isAdmin, pending, onDelete }: {
     <div className="mr-report-body">
       {flagged.length > 0 && <div className="mr-report-block">
         <h4>Checklist</h4>
-        <ul>{flagged.map(([key, e]) => <li key={key}><span>{labels.get(key) ?? key}</span>{e.state && <span className={`mr-state-tag ${e.state}`}>{CHECK_STATE_LABELS[e.state as CheckState]}</span>}{e.note && <em>{e.note}</em>}</li>)}</ul>
+        <ul className="v-items">{flagged.map(([key, e]) => <li key={key} className="v-item">
+          <div className="v-item-head">
+            <span className="v-item-label">{labels.get(key) ?? key}</span>
+            {e.state && <span className={`mr-state-tag ${e.state}`}>{CHECK_STATE_LABELS[e.state as CheckState]}</span>}
+          </div>
+          {e.note && <p className="v-item-note">{e.note}</p>}
+        </li>)}</ul>
       </div>}
       {passed.length > 0 && <div className="mr-report-block"><h4>Function test</h4><p>{passed.map(t => testLabels.get(t.key)).join(" · ")}</p></div>}
       {version.problemFound && <div className="mr-report-block"><h4>Problem / fault found</h4><p>{version.problemFound}</p></div>}
