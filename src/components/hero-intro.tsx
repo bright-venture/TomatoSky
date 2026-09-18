@@ -42,7 +42,7 @@ export function HeroIntro() {
     <div className="hero-image">
       <motion.div className="hero-image-parallax" style={reduced ? undefined : { y: imageY, scale: imageScale }}>
         <motion.div className="hero-image-fade" initial={reduced ? false : { opacity: 0, scale: 1.12 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 1.2, ease: EASE }}>
-          <Image src="/tomatosky-hero.png" alt="An illustrative arrangement of red vine tomatoes and dark heirloom tomatoes" fill priority sizes="(max-width: 760px) 100vw, 51vw" />
+          <Image src="/hero-sky.png" alt="A ripe red tomato glowing like a sun in the sky" fill priority sizes="(max-width: 760px) 100vw, 51vw" />
         </motion.div>
       </motion.div>
       <div className="image-label"><span>ONE COMPANY.<br />A WORLD OF POSSIBILITY.</span><span className="image-label-mark" aria-hidden="true">T.</span></div>

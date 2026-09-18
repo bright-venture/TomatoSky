@@ -154,5 +154,13 @@
 .hero-bottom a:hover{background:var(--ink);color:var(--paper);border-color:var(--ink)}
 .hero-bottom a svg{animation:hero-bob 2.4s ease-in-out infinite}
 @keyframes hero-bob{0%,100%{transform:translateY(0)}50%{transform:translateY(5px)}}
-.brand-card{transition:box-shadow .5s cubic-bezier(.22,1,.36,1)}
+.brand-card{transition:box-shadow .5s cubic-bezier(.22,1,.36,1);position:relative;overflow:hidden}
 .brand-card:hover{box-shadow:0 26px 60px #12291b1f}
+.brand-bg{position:absolute;inset:0;object-fit:cover;z-index:0}
+.brand-scrim{position:absolute;inset:0;z-index:1}
+.valley-scrim{background:linear-gradient(180deg,#0b2416cc 0%,#0b241663 42%,#0b2416ec 100%)}
+.beauty-scrim{background:linear-gradient(180deg,#140d18c2 0%,#140d1877 42%,#140d18f0 100%)}
+.brand-card .brand-card-top,.brand-card .brand-name,.brand-card .brand-card-bottom{position:relative;z-index:2}
+.brand-card.valley{color:#f4f8f0}
+.brand-card.beauty{color:#f6efe6}
+.brand-card.valley .brand-card-bottom{border-color:#ffffff30}
