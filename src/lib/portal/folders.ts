@@ -42,7 +42,7 @@ export async function createFolder(input: { module: string; name: string; parent
   }
 
   const { error } = await supabase.from("portal_folders").insert({ module: input.module, name, parent_id: parentId, brand_id: brandId });
-  if (error) return { ok: false, error: "Could not create the folder. Please try again." };
+  if (error) return { ok: false, error: `Could not create the folder: ${error.message}` };
   revalidatePath("/portal");
   return { ok: true };
 }
