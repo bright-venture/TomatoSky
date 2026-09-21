@@ -10,10 +10,11 @@ import type { Machine } from "@/lib/portal/machine-types";
 import type { ReportSnapshot } from "@/lib/portal/maintenance-templates";
 import { VersionRow } from "./version-row";
 
-export function FolderBrowser({ module, folders, brandId, machines = [], snapshots = [], isAdmin = false, initialFolderId = null }: { module: FolderModule; folders: FolderRow[]; brandId: string; machines?: Machine[]; snapshots?: ReportSnapshot[]; isAdmin?: boolean; initialFolderId?: string | null }) {
+export function FolderBrowser({ module, folders, brandId, brands = [], machines = [], snapshots = [], isAdmin = false, initialFolderId = null }: { module: FolderModule; folders: FolderRow[]; brandId: string; brands?: { id: string; name: string }[]; machines?: Machine[]; snapshots?: ReportSnapshot[]; isAdmin?: boolean; initialFolderId?: string | null }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [currentId, setCurrentId] = useState<string | null>(initialFolderId ?? null);
+  const [createBrand, setCreateBrand] = useState(() => brands[0]?.id ?? "");
 
   const snapsByMachine = useMemo(() => {
     const map = new Map<string, ReportSnapshot[]>();
@@ -74,7 +75,11 @@ export function FolderBrowser({ module, folders, brandId, machines = [], snapsho
   function submitCreate(event: React.FormEvent) {
     event.preventDefault();
     if (!newName.trim()) return;
-    run(() => createFolder({ module, name: newName, parentId: activeId, brandId: activeId ? null : brandId }), () => setNewName(""));
+    // Top-level folders need a brand: the selected brand, or one chosen in the form
+    // when viewing "All brands". Subfolders inherit their parent's brand.
+    const folderBrand = activeId ? null : (brandId || createBrand);
+    if (!activeId && !folderBrand) { setError("Choose a brand for this folder."); return; }
+    run(() => createFolder({ module, name: newName, parentId: activeId, brandId: folderBrand }), () => setNewName(""));
   }
 
   function onDelete(folder: FolderRow) {
@@ -91,6 +96,7 @@ export function FolderBrowser({ module, folders, brandId, machines = [], snapsho
         {path.map(folder => <span key={folder.id}><span className="sep" aria-hidden="true">/</span><button type="button" className={folder.id === activeId ? "current" : ""} disabled={pending} onClick={() => setCurrentId(folder.id)}>{folder.name}</button></span>)}
       </nav>
       <form className="folder-new" onSubmit={submitCreate}>
+        {!brandId && !activeId && brands.length > 0 && <select className="folder-brand" value={createBrand} onChange={event => setCreateBrand(event.target.value)} disabled={pending} aria-label="Brand for new folder">{brands.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}</select>}
         <input value={newName} onChange={event => setNewName(event.target.value)} placeholder="New folder name" maxLength={120} disabled={pending} aria-label={`New ${moduleLabel.toLowerCase()} folder name`} />
         <button className="folder-add" disabled={pending || !newName.trim()}><FolderPlus size={16} /> Add folder</button>
       </form>
