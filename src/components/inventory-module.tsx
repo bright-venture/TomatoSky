@@ -15,9 +15,7 @@ function formatQty(n: number): string {
   return Number.isInteger(n) ? String(n) : String(parseFloat(n.toFixed(3)));
 }
 
-type DocFolder = { id: string; name: string; parentId: string | null; brandId: string | null };
-
-export function InventoryModule({ inventory, brands, brandId, machines, isAdmin, documentFolders }: { inventory: Inventory; brands: Brand[]; brandId: string; machines: Machine[]; isAdmin: boolean; documentFolders: DocFolder[] }) {
+export function InventoryModule({ inventory, brands, brandId, machines, isAdmin }: { inventory: Inventory; brands: Brand[]; brandId: string; machines: Machine[]; isAdmin: boolean }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [tab, setTab] = useState<Tab>("products");
@@ -173,6 +171,6 @@ export function InventoryModule({ inventory, brands, brandId, machines, isAdmin,
       </section>
     </>}
 
-    {tab === "machines" && <MachinesConsole machines={machines} isAdmin={isAdmin} brands={brands} brandId={brandId} documentFolders={documentFolders} />}
+    {tab === "machines" && <MachinesConsole machines={machines} isAdmin={isAdmin} brands={brands} brandId={brandId} />}
   </div>;
 }

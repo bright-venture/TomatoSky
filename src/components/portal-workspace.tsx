@@ -35,7 +35,6 @@ export function PortalWorkspace({ brands, folders, role, currentUserId, employee
   const [brandId, setBrandId] = useState("");
   // When the Reports "Versions" button opens a machine's Documents folder.
   const [targetFolder, setTargetFolder] = useState<string | null>(null);
-  const documentFolders = folders.filter(folder => folder.module === "documents").map(folder => ({ id: folder.id, name: folder.name, parentId: folder.parent_id, brandId: folder.brand_id }));
 
   function openVersions(machine: Machine) {
     if (!machine.documentsFolderId) return;
@@ -90,7 +89,7 @@ export function PortalWorkspace({ brands, folders, role, currentUserId, employee
             </div>
           </section>
           <section className="portal-panel getting-started"><div><p className="eyebrow">YOUR WORKSPACE</p><h2>Welcome to your workspace.</h2><p>Your employee account is connected. Next, we will set up products, locations, and opening stock for your brands.</p></div><span className="foundation-icon"><Sprout size={44} strokeWidth={1.2} /></span></section>
-        </> : section === "Inventory" ? <InventoryModule inventory={inventory} brands={brands} brandId={brandId} machines={machines} isAdmin={role === "admin"} documentFolders={documentFolders} /> : folderModule
+        </> : section === "Inventory" ? <InventoryModule inventory={inventory} brands={brands} brandId={brandId} machines={machines} isAdmin={role === "admin"} /> : folderModule
           ? <FolderBrowser key={folderModule + brandId + (targetFolder ?? "")} module={folderModule} folders={folders.filter(folder => folder.module === folderModule && (!brandId || folder.brand_id === brandId))} brandId={brandId} brands={brands} machines={machines} snapshots={snapshots} isAdmin={role === "admin"} initialFolderId={targetFolder} />
           : section === "Administration" && role === "admin" ? <AdministrationConsole brands={brands} productCounts={productCounts} employees={employees} currentUserId={currentUserId} /> : <section className="portal-panel empty-state"><span className="empty-icon"><SectionIcon size={31} strokeWidth={1.4} /></span><p className="eyebrow">{brandName.toUpperCase()}</p><h2>{details[section].title}</h2><p>{details[section].body}</p><span className="coming-label">Not available yet</span></section>}
       </main>
