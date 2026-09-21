@@ -62,10 +62,9 @@ export function ReportsList({ machines, reports, snapshots, brandId, onOpenVersi
             ? <span className={`report-tag ${report.machineStatus}`}>{REPORT_STATUS_LABELS[report.machineStatus]}</span>
             : <span className="report-tag none">Not started</span>}
           <div className="inv-actions">
-            <button type="button" className="inv-move-btn" disabled={!hasFolder} onClick={() => onOpenVersions(machine)}
-              title={hasFolder ? "Open saved versions in Documents" : "Assign a Documents folder in Inventory → Machines"}>
-              <FolderOpen size={15} /> Versions ({count})
-            </button>
+            {hasFolder
+              ? <button type="button" className="inv-move-btn" onClick={() => onOpenVersions(machine)} title="Open saved versions in the assigned Documents folder"><FolderOpen size={15} /> Versions ({count})</button>
+              : <a className="inv-move-btn" href={`/m/${machine.id}`} title="View saved versions on the report page (assign a Documents folder in Inventory → Machines to open them there)"><FolderOpen size={15} /> Versions ({count})</a>}
             <a className="inv-move-btn" href={`/m/${machine.id}`}>Open report <ArrowUpRight size={15} /></a>
           </div>
         </li>;
