@@ -4,6 +4,9 @@ import Image from "next/image";
 import { useRef } from "react";
 import { ArrowDown, ArrowUpRight } from "lucide-react";
 import { motion, useReducedMotion, useScroll, useTransform, type Variants } from "motion/react";
+// Static import: the built URL includes a content hash, so replacing the file
+// changes the URL and the optimized-image cache busts automatically.
+import heroSky from "../../public/hero-sky.png";
 
 const EASE: [number, number, number, number] = [0.22, 1, 0.36, 1];
 
@@ -43,7 +46,7 @@ export function HeroIntro() {
     <div className="hero-image">
       <motion.div className="hero-image-parallax" style={reduced ? undefined : { y: imageY, scale: imageScale }}>
         <motion.div className="hero-image-fade" initial={reduced ? false : { opacity: 0, scale: 1.12 }} animate={{ opacity: 1, scale: 1 }} transition={{ duration: 1.2, ease: EASE }}>
-          <Image src="/hero-sky.png" alt="A ripe red tomato glowing like a sun in the sky" fill priority sizes="(max-width: 760px) 100vw, 51vw" />
+          <Image src={heroSky} alt="A tomato glowing like a sun in a cloudy sky" fill priority sizes="(max-width: 760px) 100vw, 51vw" />
         </motion.div>
       </motion.div>
       <div className="image-label"><span>ONE COMPANY.<br />A WORLD OF POSSIBILITY.</span><span className="image-label-mark" aria-hidden="true">T.</span></div>
