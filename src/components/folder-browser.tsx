@@ -34,7 +34,7 @@ export function FolderBrowser({ module, folders, brandId, brands = [], machines 
   const moduleLabel = module.charAt(0).toUpperCase() + module.slice(1);
   const byId = useMemo(() => new Map(folders.map(folder => [folder.id, folder])), [folders]);
   const activeId = currentId && byId.has(currentId) ? currentId : null;
-  const children = folders.filter(folder => folder.parent_id === activeId).sort((a, b) => a.name.localeCompare(b.name));
+  const children = folders.filter(folder => folder.parent_id === activeId).sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: "base" }));
   // Machines whose saved report versions belong in the folder currently open.
   const machinesHere = activeId ? machines.filter(m => m.documentsFolderId === activeId) : [];
 
@@ -104,11 +104,12 @@ export function FolderBrowser({ module, folders, brandId, brands = [], machines 
 
     {error && <p className="folder-error" role="alert">{error}</p>}
 
-    {children.length === 0 ? <div className="folder-empty">
+    {children.length === 0 && machinesHere.length === 0 && <div className="folder-empty">
       <span className="folder-empty-icon"><Folder size={26} strokeWidth={1.4} /></span>
       <p>No folders here yet.</p>
       <small>{activeId ? "Add a subfolder above, or move folders in from elsewhere." : `Create your first ${moduleLabel.toLowerCase()} folder above.`}</small>
-    </div> : <ul className="folder-list">
+    </div>}
+    {children.length > 0 && <ul className="folder-list">
       {children.map(folder => {
         const subCount = folders.filter(child => child.parent_id === folder.id).length;
         if (renaming?.id === folder.id) return <li key={folder.id} className="folder-row">

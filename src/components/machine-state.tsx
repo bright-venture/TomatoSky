@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Cpu, History, Trash2 } from "lucide-react";
+import { Cpu, FileDown, History, Trash2 } from "lucide-react";
 import { MaintenanceReportForm } from "./maintenance-report-form";
 import { VersionRow } from "./version-row";
 import { deleteMaintenanceReport, deleteReportSnapshot } from "@/lib/portal/maintenance";
@@ -51,7 +51,10 @@ export function MachineState({ machine, report, versions, defaultTechnician, isA
       {report?.updatedAt
         ? <span>Last edited {report.updatedAt.slice(0, 16).replace("T", " ")}{report.technicianName ? ` · ${report.technicianName}` : ""}</span>
         : <span>New report - not saved yet.</span>}
-      {isAdmin && report && <button type="button" className="icon-btn danger" onClick={removeReport} disabled={pending} aria-label="Delete report"><Trash2 size={15} /></button>}
+      <span className="mr-foot-actions">
+        {template && <a className="mr-pdf" href={`/m/${machine.id}/print`} target="_blank" rel="noopener"><FileDown size={13} /> PDF</a>}
+        {isAdmin && report && <button type="button" className="icon-btn danger" onClick={removeReport} disabled={pending} aria-label="Delete report"><Trash2 size={15} /></button>}
+      </span>
     </div>
 
     {!template

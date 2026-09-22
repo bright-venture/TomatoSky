@@ -98,6 +98,12 @@ export async function getMachineSnapshots(supabase: SupabaseClient, machineId: s
   return (data ?? []).map(toSnapshot);
 }
 
+// A single saved version by id (for the printable PDF view).
+export async function getSnapshot(supabase: SupabaseClient, id: string): Promise<ReportSnapshot | null> {
+  const { data } = await supabase.from("maintenance_report_snapshots").select("*").eq("id", id).maybeSingle();
+  return data ? toSnapshot(data) : null;
+}
+
 // All saved versions across machines, newest first, for the portal Reports
 // section. Non-fatal: empty if the snapshots migration has not been applied yet.
 export async function getSnapshots(supabase: SupabaseClient): Promise<ReportSnapshot[]> {

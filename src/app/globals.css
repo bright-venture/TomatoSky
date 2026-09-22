@@ -185,7 +185,11 @@
 .mr-state-tag.changed{background:#e5eef4;color:#2f6088}
 .mr-report-foot{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:16px;padding-top:14px;border-top:1px solid #eef1ea;font-size:12px;color:#5a6a5c}
 .mr-report-foot>span{background:#eef1ec;border-radius:6px;padding:4px 10px;white-space:nowrap}
-.mr-report-foot .icon-btn{margin-left:auto;background:#fff}
+.mr-report-foot>span.mr-foot-actions{background:none;padding:0}
+.mr-foot-actions{margin-left:auto;display:flex;align-items:center;gap:10px}
+.mr-foot-actions .icon-btn{margin-left:0;background:#fff}
+.mr-pdf{display:inline-flex;align-items:center;gap:5px;font-size:12px;color:var(--ink);border:1px solid var(--line);border-radius:5px;padding:5px 10px;white-space:nowrap;background:#fff}
+.mr-pdf:hover{background:#f1f4ef}
 @media(max-width:640px){.machine-card{padding:24px}.mr-form .mr-grid{grid-template-columns:1fr}.mr-row{grid-template-columns:1fr}.mr-states{justify-content:flex-start}}
 .qr-overlay{position:fixed;inset:0;background:#12291bcc;display:grid;place-items:center;padding:20px;z-index:50}
 .qr-dialog{background:#fff;border-radius:14px;padding:28px;max-width:360px;width:100%;text-align:center}

@@ -1,6 +1,6 @@
 "use client";
 
-import { Trash2 } from "lucide-react";
+import { FileDown, Trash2 } from "lucide-react";
 import {
   TEMPLATES, MAINTENANCE_TYPE_LABELS, REPORT_STATUS_LABELS, CHECK_STATE_LABELS,
   type ReportSnapshot, type CheckState,
@@ -49,7 +49,10 @@ export function VersionRow({ version, isAdmin, pending, onDelete }: {
         {version.operatingHours && <span>Hours: {version.operatingHours}</span>}
         {version.siteLocation && <span>Site: {version.siteLocation}</span>}
         {version.nextMaintenance && <span>Next: {version.nextMaintenance}</span>}
-        {isAdmin && <button type="button" className="icon-btn danger" onClick={onDelete} disabled={pending} aria-label="Delete version"><Trash2 size={14} /></button>}
+        <span className="mr-foot-actions">
+          <a className="mr-pdf" href={`/m/${version.machineId}/print?v=${version.id}`} target="_blank" rel="noopener"><FileDown size={13} /> PDF</a>
+          {isAdmin && <button type="button" className="icon-btn danger" onClick={onDelete} disabled={pending} aria-label="Delete version"><Trash2 size={14} /></button>}
+        </span>
       </div>
     </div>
   </details>;
