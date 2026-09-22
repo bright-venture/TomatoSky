@@ -9,6 +9,7 @@ import type { Folder as FolderRow, FolderModule, FolderResult } from "@/lib/port
 import type { Machine } from "@/lib/portal/machine-types";
 import type { ReportSnapshot } from "@/lib/portal/maintenance-templates";
 import { VersionRow } from "./version-row";
+import { Select } from "./select";
 
 export function FolderBrowser({ module, folders, brandId, brands = [], machines = [], snapshots = [], isAdmin = false, initialFolderId = null }: { module: FolderModule; folders: FolderRow[]; brandId: string; brands?: { id: string; name: string }[]; machines?: Machine[]; snapshots?: ReportSnapshot[]; isAdmin?: boolean; initialFolderId?: string | null }) {
   const router = useRouter();
@@ -96,7 +97,7 @@ export function FolderBrowser({ module, folders, brandId, brands = [], machines 
         {path.map(folder => <span key={folder.id}><span className="sep" aria-hidden="true">/</span><button type="button" className={folder.id === activeId ? "current" : ""} disabled={pending} onClick={() => setCurrentId(folder.id)}>{folder.name}</button></span>)}
       </nav>
       <form className="folder-new" onSubmit={submitCreate}>
-        {!brandId && !activeId && brands.length > 0 && <select className="folder-brand" value={createBrand} onChange={event => setCreateBrand(event.target.value)} disabled={pending} aria-label="Brand for new folder">{brands.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}</select>}
+        {!brandId && !activeId && brands.length > 0 && <Select className="folder-brand" value={createBrand} onChange={setCreateBrand} disabled={pending} ariaLabel="Brand for new folder" options={brands.map(b => ({ value: b.id, label: b.name }))} />}
         <input value={newName} onChange={event => setNewName(event.target.value)} placeholder="New folder name" maxLength={120} disabled={pending} aria-label={`New ${moduleLabel.toLowerCase()} folder name`} />
         <button className="folder-add" disabled={pending || !newName.trim()}><FolderPlus size={16} /> Add folder</button>
       </form>
@@ -123,10 +124,8 @@ export function FolderBrowser({ module, folders, brandId, brands = [], machines 
         if (moving?.id === folder.id) return <li key={folder.id} className="folder-row">
           <span className="folder-icon"><ArrowRightLeft size={20} /></span>
           <div className="folder-inline">
-            <select value={moving.parentId} onChange={event => setMoving({ id: folder.id, parentId: event.target.value })} disabled={pending} aria-label={`Move ${folder.name} to`}>
-              <option value="">{moduleLabel} home (top level)</option>
-              {moveTargets(folder.id).map(target => <option key={target.id} value={target.id}>{pathLabel(target.id)}</option>)}
-            </select>
+            <Select value={moving.parentId} onChange={v => setMoving({ id: folder.id, parentId: v })} disabled={pending} ariaLabel={`Move ${folder.name} to`}
+              options={[{ value: "", label: `${moduleLabel} home (top level)` }, ...moveTargets(folder.id).map(target => ({ value: target.id, label: pathLabel(target.id) }))]} />
             <button type="button" className="icon-btn" onClick={() => run(() => moveFolder({ id: folder.id, parentId: moving.parentId || null }), () => setMoving(null))} disabled={pending} aria-label="Confirm move"><Check size={16} /></button>
             <button type="button" className="icon-btn" onClick={() => setMoving(null)} disabled={pending} aria-label="Cancel move"><X size={16} /></button>
           </div>

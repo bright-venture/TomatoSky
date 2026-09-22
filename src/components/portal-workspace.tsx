@@ -8,6 +8,7 @@ import { FolderBrowser } from "./folder-browser";
 import { AdministrationConsole } from "./administration-console";
 import { InventoryModule } from "./inventory-module";
 import { ReportsList } from "./reports-list";
+import { Select } from "./select";
 import { type Folder, type FolderModule } from "@/lib/portal/folder-types";
 import type { Employee, PortalRole } from "@/lib/portal/admin-types";
 import type { Brand } from "@/lib/portal/brand-types";
@@ -67,7 +68,7 @@ export function PortalWorkspace({ brands, folders, role, currentUserId, employee
       <main className="portal-main">
         <div className="portal-heading">
           <div><p className="eyebrow">TOMATOSKY WORKSPACE</p><h1>{section}</h1><p>{section === "Overview" ? "Your brands and operations, in one place." : `Company-wide ${section.toLowerCase()}, organized around your team.`}</p></div>
-          <div className="brand-select"><label htmlFor="brand-filter">Brand</label><select id="brand-filter" value={brandId} onChange={event => setBrandId(event.target.value)}><option value="">All brands</option>{brands.map(brand => <option key={brand.id} value={brand.id}>{brand.name}</option>)}</select></div>
+          <div className="brand-select"><label htmlFor="brand-filter">Brand</label><Select id="brand-filter" ariaLabel="Filter by brand" className="ui-brand" value={brandId} onChange={setBrandId} options={[{ value: "", label: "All brands" }, ...brands.map(brand => ({ value: brand.id, label: brand.name }))]} /></div>
         </div>
         {section === "Reports" ? <ReportsList machines={machines} reports={reports} snapshots={snapshots} brandId={brandId} onOpenVersions={openVersions} /> : section === "Overview" ? <>
           <div className="metric-grid">

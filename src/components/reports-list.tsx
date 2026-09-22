@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { ArrowUpRight, ClipboardList, FolderOpen } from "lucide-react";
 import type { Machine } from "@/lib/portal/machine-types";
 import { MODEL_LABELS, REPORT_STATUS_LABELS, type MaintenanceReport, type ReportSnapshot } from "@/lib/portal/maintenance-templates";
+import { Select } from "./select";
 
 // One report per machine. The Reports section lists every machine with its report;
 // the Versions button opens the machine's assigned Documents folder (where its
@@ -39,12 +40,12 @@ export function ReportsList({ machines, reports, snapshots, brandId, onOpenVersi
   return <section className="portal-panel">
     <div className="panel-heading">
       <div><h2>Maintenance reports</h2><p>{visible.length} {visible.length === 1 ? "machine" : "machines"}{brandId ? " in this brand" : ""}. Open a report to edit, or its versions in Documents.</p></div>
-      <div className="list-sort"><label htmlFor="rep-sort">Sort</label><select id="rep-sort" value={sort} onChange={e => setSort(e.target.value)}>
-        <option value="name-asc">Name (A-Z)</option>
-        <option value="name-desc">Name (Z-A)</option>
-        <option value="edited">Recently edited</option>
-        <option value="status">Status</option>
-      </select></div>
+      <div className="list-sort"><label htmlFor="rep-sort">Sort</label><Select id="rep-sort" ariaLabel="Sort machines" className="ui-sort" value={sort} onChange={setSort} options={[
+        { value: "name-asc", label: "Name (A-Z)" },
+        { value: "name-desc", label: "Name (Z-A)" },
+        { value: "edited", label: "Recently edited" },
+        { value: "status", label: "Status" },
+      ]} /></div>
     </div>
     <ul className="inv-list">
       {visible.length === 0 && <li className="inv-empty">No machines yet. Add a machine in Inventory → Machines to create its report.</li>}

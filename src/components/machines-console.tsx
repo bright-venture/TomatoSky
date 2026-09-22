@@ -7,6 +7,7 @@ import { Check, Cpu, FolderPlus, Pencil, Plus, Printer, QrCode, Trash2, X } from
 import { createMachine, deleteMachine, ensureAllReportFolders, updateMachine } from "@/lib/portal/machines";
 import { MACHINE_STATUSES, STATUS_LABELS, type Machine, type MachineResult } from "@/lib/portal/machine-types";
 import { MACHINE_MODELS, MODEL_LABELS, type MachineModel } from "@/lib/portal/maintenance-templates";
+import { Select } from "./select";
 
 const SITE = process.env.NEXT_PUBLIC_SITE_URL ?? "";
 
@@ -60,7 +61,7 @@ export function MachinesConsole({ machines, isAdmin, brands, brandId }: { machin
           <span className="inv-icon"><Cpu size={19} /></span>
           <div className="inv-edit">
             <input value={editing.name} onChange={e => setEditing({ ...editing, name: e.target.value })} maxLength={160} placeholder="Name" disabled={pending} aria-label="Machine name" />
-            <select value={editing.model} onChange={e => setEditing({ ...editing, model: e.target.value as MachineModel })} disabled={pending} aria-label="Model">{MACHINE_MODELS.map(m => <option key={m} value={m}>{MODEL_LABELS[m]}</option>)}</select>
+            <Select ariaLabel="Model" value={editing.model} onChange={v => setEditing({ ...editing, model: v as MachineModel })} disabled={pending} options={MACHINE_MODELS.map(m => ({ value: m, label: MODEL_LABELS[m] }))} />
             <input value={editing.assetTag} onChange={e => setEditing({ ...editing, assetTag: e.target.value })} maxLength={80} placeholder="Machine ID" disabled={pending} aria-label="Machine ID" />
             <input value={editing.location} onChange={e => setEditing({ ...editing, location: e.target.value })} maxLength={160} placeholder="Location" disabled={pending} aria-label="Location" />
             <button className="icon-btn" disabled={pending || !editing.name.trim()} onClick={() => run(() => updateMachine({ id: machine.id, name: editing.name, location: editing.location || null, model: editing.model, assetTag: editing.assetTag || null }), () => setEditing(null))} aria-label="Save"><Check size={16} /></button>
@@ -103,11 +104,11 @@ export function MachinesConsole({ machines, isAdmin, brands, brandId }: { machin
       <form className="mc-dialog" onSubmit={e => { e.preventDefault(); if (!name.trim() || !brand) return; run(() => createMachine({ name, location: location || null, status, brandId: brand, model, assetTag: assetTag || null }), () => { setName(""); setLocation(""); setStatus("running"); setAssetTag(""); setAdding(false); }); }}>
         <div className="mc-dialog-head"><h3>Add a machine</h3><p>A folder for this machine's saved report versions is created automatically under Documents → Machine Reports.</p></div>
         <div className="admin-field"><label htmlFor="mc-name">Name</label><input id="mc-name" value={name} onChange={e => setName(e.target.value)} maxLength={160} placeholder="Packing line 1" disabled={pending} autoFocus required /></div>
-        <div className="admin-field"><label htmlFor="mc-model">Model</label><select id="mc-model" value={model} onChange={e => setModel(e.target.value as MachineModel)} disabled={pending}>{MACHINE_MODELS.map(m => <option key={m} value={m}>{MODEL_LABELS[m]}</option>)}</select></div>
-        <div className="admin-field"><label htmlFor="mc-brand">Brand</label><select id="mc-brand" value={brand} onChange={e => setBrand(e.target.value)} disabled={pending}>{brands.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}</select></div>
+        <div className="admin-field"><label htmlFor="mc-model">Model</label><Select id="mc-model" ariaLabel="Model" value={model} onChange={v => setModel(v as MachineModel)} disabled={pending} options={MACHINE_MODELS.map(m => ({ value: m, label: MODEL_LABELS[m] }))} /></div>
+        <div className="admin-field"><label htmlFor="mc-brand">Brand</label><Select id="mc-brand" ariaLabel="Brand" value={brand} onChange={setBrand} disabled={pending} options={brands.map(b => ({ value: b.id, label: b.name }))} /></div>
         <div className="admin-field"><label htmlFor="mc-asset">Machine ID <span className="opt">(optional)</span></label><input id="mc-asset" value={assetTag} onChange={e => setAssetTag(e.target.value)} maxLength={80} placeholder="Serial / asset tag" disabled={pending} /></div>
         <div className="admin-field"><label htmlFor="mc-loc">Location <span className="opt">(optional)</span></label><input id="mc-loc" value={location} onChange={e => setLocation(e.target.value)} maxLength={160} placeholder="Warehouse A" disabled={pending} /></div>
-        <div className="admin-field"><label htmlFor="mc-status">Status</label><select id="mc-status" value={status} onChange={e => setStatus(e.target.value)} disabled={pending}>{MACHINE_STATUSES.map(s => <option key={s} value={s}>{STATUS_LABELS[s]}</option>)}</select></div>
+        <div className="admin-field"><label htmlFor="mc-status">Status</label><Select id="mc-status" ariaLabel="Status" value={status} onChange={setStatus} disabled={pending} options={MACHINE_STATUSES.map(s => ({ value: s, label: STATUS_LABELS[s] }))} /></div>
         {error && <p className="folder-error" role="alert">{error}</p>}
         <div className="mc-actions">
           <button type="button" className="qr-close" onClick={() => setAdding(false)} disabled={pending}>Cancel</button>

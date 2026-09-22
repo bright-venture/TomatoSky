@@ -6,6 +6,7 @@ import { ArrowDownToLine, ArrowUpFromLine, Boxes, Check, Cpu, MapPin, Package, P
 import { createLocation, createProduct, deleteLocation, deleteMovement, deleteProduct, recordMovement, renameLocation, updateProduct } from "@/lib/portal/inventory";
 import type { Inventory, InventoryResult, MovementKind } from "@/lib/portal/inventory-types";
 import { MachinesConsole } from "./machines-console";
+import { Select } from "./select";
 import type { Machine } from "@/lib/portal/machine-types";
 
 type Brand = { id: string; name: string };
@@ -80,7 +81,7 @@ export function InventoryModule({ inventory, brands, brandId, machines, isAdmin 
         <form className="inv-form" onSubmit={e => { e.preventDefault(); if (!pName.trim() || !pBrand) return; run(() => createProduct({ brandId: pBrand, name: pName, unit: pUnit }), () => { setPName(""); setPUnit("kg"); }); }}>
           <div className="admin-field"><label htmlFor="p-name">Name</label><input id="p-name" value={pName} onChange={e => setPName(e.target.value)} maxLength={160} placeholder="Roma tomatoes" disabled={pending} required /></div>
           <div className="admin-field"><label htmlFor="p-unit">Unit</label><input id="p-unit" value={pUnit} onChange={e => setPUnit(e.target.value)} maxLength={20} placeholder="kg" disabled={pending} required /></div>
-          <div className="admin-field"><label htmlFor="p-brand">Brand</label><select id="p-brand" value={pBrand} onChange={e => setPBrand(e.target.value)} disabled={pending}>{brands.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}</select></div>
+          <div className="admin-field"><label htmlFor="p-brand">Brand</label><Select id="p-brand" ariaLabel="Brand" value={pBrand} onChange={setPBrand} disabled={pending} options={brands.map(b => ({ value: b.id, label: b.name }))} /></div>
           <button className="folder-add" disabled={pending || !pName.trim() || !pBrand}><Plus size={16} /> Add product</button>
         </form>
       </section>
@@ -121,7 +122,7 @@ export function InventoryModule({ inventory, brands, brandId, machines, isAdmin 
       <div className="panel-heading"><div><h2>Stock locations</h2><p>Warehouses, cold rooms, or any place stock is held. Each belongs to a brand.</p></div></div>
       <form className="inv-form" onSubmit={e => { e.preventDefault(); if (!locName.trim() || !locBrand) return; run(() => createLocation({ name: locName, brandId: locBrand }), () => setLocName("")); }}>
         <div className="admin-field"><label htmlFor="loc-name">New location</label><input id="loc-name" value={locName} onChange={e => setLocName(e.target.value)} maxLength={120} placeholder="Main cold room" disabled={pending} required /></div>
-        <div className="admin-field"><label htmlFor="loc-brand">Brand</label><select id="loc-brand" value={locBrand} onChange={e => setLocBrand(e.target.value)} disabled={pending}>{brands.map(b => <option key={b.id} value={b.id}>{b.name}</option>)}</select></div>
+        <div className="admin-field"><label htmlFor="loc-brand">Brand</label><Select id="loc-brand" ariaLabel="Brand" value={locBrand} onChange={setLocBrand} disabled={pending} options={brands.map(b => ({ value: b.id, label: b.name }))} /></div>
         <button className="folder-add" disabled={pending || !locName.trim() || !locBrand}><Plus size={16} /> Add location</button>
       </form>
       <ul className="inv-list">
@@ -148,9 +149,9 @@ export function InventoryModule({ inventory, brands, brandId, machines, isAdmin 
       <section className="portal-panel">
         <div className="panel-heading"><div><h2>Record a movement</h2><p>Receipts add stock; dispatches remove it.</p></div></div>
         <form className="inv-form movement" onSubmit={e => { e.preventDefault(); run(() => recordMovement({ productId: mProduct, locationId: mLocation, kind: mKind, quantity: mQty, note: mNote || null, occurredAt: mDate }), () => { setMQty(""); setMNote(""); }); }}>
-          <div className="admin-field"><label htmlFor="m-kind">Type</label><select id="m-kind" value={mKind} onChange={e => setMKind(e.target.value as MovementKind)} disabled={pending}><option value="receipt">Receipt (in)</option><option value="dispatch">Dispatch (out)</option></select></div>
-          <div className="admin-field"><label htmlFor="m-product">Product</label><select id="m-product" value={mProduct} onChange={e => setMProduct(e.target.value)} disabled={pending} required><option value="">Choose…</option>{visibleProducts.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}</select></div>
-          <div className="admin-field"><label htmlFor="m-location">Location</label><select id="m-location" value={mLocation} onChange={e => setMLocation(e.target.value)} disabled={pending} required><option value="">Choose…</option>{visibleLocations.map(l => <option key={l.id} value={l.id}>{l.name}</option>)}</select></div>
+          <div className="admin-field"><label htmlFor="m-kind">Type</label><Select id="m-kind" ariaLabel="Movement type" value={mKind} onChange={v => setMKind(v as MovementKind)} disabled={pending} options={[{ value: "receipt", label: "Receipt (in)" }, { value: "dispatch", label: "Dispatch (out)" }]} /></div>
+          <div className="admin-field"><label htmlFor="m-product">Product</label><Select id="m-product" ariaLabel="Product" value={mProduct} onChange={setMProduct} disabled={pending} placeholder="Choose…" options={visibleProducts.map(p => ({ value: p.id, label: p.name }))} /></div>
+          <div className="admin-field"><label htmlFor="m-location">Location</label><Select id="m-location" ariaLabel="Location" value={mLocation} onChange={setMLocation} disabled={pending} placeholder="Choose…" options={visibleLocations.map(l => ({ value: l.id, label: l.name }))} /></div>
           <div className="admin-field"><label htmlFor="m-qty">Quantity</label><input id="m-qty" type="number" min="0" step="any" value={mQty} onChange={e => setMQty(e.target.value)} placeholder="0" disabled={pending} required /></div>
           <div className="admin-field"><label htmlFor="m-date">Date</label><input id="m-date" type="date" value={mDate} onChange={e => setMDate(e.target.value)} disabled={pending} required /></div>
           <div className="admin-field wide"><label htmlFor="m-note">Note <span className="opt">(optional)</span></label><input id="m-note" value={mNote} onChange={e => setMNote(e.target.value)} maxLength={400} placeholder="Supplier, PO number…" disabled={pending} /></div>

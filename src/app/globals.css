@@ -231,6 +231,28 @@
 .folder-report-head{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--ink);margin-bottom:8px}
 .folder-report-head span{color:var(--muted);font-size:12px}
 .panel-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+.ui-select{position:relative;display:block;width:100%}
+.ui-select-trigger{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;min-height:44px;border:1px solid #cbd4c6;border-radius:6px;background:#fff;padding:10px 12px;font:inherit;font-size:14px;color:var(--ink);cursor:pointer;text-align:left}
+.ui-select-trigger:hover{border-color:#b6c2b1}
+.ui-select-trigger:focus-visible{outline:none;border-color:var(--ink);box-shadow:0 0 0 3px #153c2e1f}
+.ui-select-trigger[disabled]{opacity:.6;cursor:not-allowed}
+.ui-select-trigger svg{flex-shrink:0;color:var(--muted)}
+.ui-select-ph{color:#9aa79a}
+.ui-select-menu{z-index:1000;list-style:none;margin:0;padding:5px;background:#fff;border:1px solid var(--line);border-radius:8px;box-shadow:0 12px 34px #12291b26;max-height:280px;overflow:auto}
+.ui-select-menu li{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 11px;border-radius:5px;font-size:14px;color:var(--ink);cursor:pointer;line-height:1.3}
+.ui-select-menu li.active{background:#f1f4ef}
+.ui-select-menu li.sel{background:#e9f0e8;color:#224e36;font-weight:600}
+.ui-select-menu li.sel.active{background:#e0ebde}
+.ui-select-menu li svg{flex-shrink:0;color:#3d6b45}
+.ui-select-menu li span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* Per-context sizing: form fields fill their column; inline/compact contexts size to content. */
+.brand-select .ui-select{min-width:210px}
+.list-sort .ui-select{width:auto;min-width:168px}
+.inv-edit .ui-select{width:auto;min-width:170px}
+.folder-inline .ui-select{flex:1;width:auto;min-width:0}
+.folder-new .ui-select.folder-brand{width:auto;min-width:150px}
+.employee-controls .ui-select.ui-role{width:auto;min-width:104px}
+.ui-select-trigger>span:first-child{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .folder-brand{appearance:none;-webkit-appearance:none;-moz-appearance:none;background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23657067' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E") no-repeat right 10px center;border:1px solid var(--line);border-radius:6px;padding:9px 32px 9px 12px;font:inherit;font-size:14px;color:var(--ink);cursor:pointer}
 .list-sort{display:flex;align-items:center;gap:8px;font-size:12px;color:#788576}
 .list-sort label{text-transform:uppercase;letter-spacing:1px;font-weight:600}

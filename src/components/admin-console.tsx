@@ -6,6 +6,7 @@ import { Check, Mail, ShieldCheck, Trash2, UserPlus } from "lucide-react";
 import { inviteEmployee, removeEmployee, setEmployeeActive, setEmployeeRole } from "@/lib/portal/admin";
 import type { AdminResult, Employee, PortalRole } from "@/lib/portal/admin-types";
 import { ConfirmDelete } from "./confirm-delete";
+import { Select } from "./select";
 
 export function AdminConsole({ employees, currentUserId }: { employees: Employee[]; currentUserId: string }) {
   const router = useRouter();
@@ -44,7 +45,7 @@ export function AdminConsole({ employees, currentUserId }: { employees: Employee
       <form className="admin-invite-form" onSubmit={submitInvite}>
         <div className="admin-field"><label htmlFor="invite-name">Full name</label><input id="invite-name" value={name} onChange={event => setName(event.target.value)} maxLength={120} placeholder="Jane Doe" disabled={pending} required /></div>
         <div className="admin-field"><label htmlFor="invite-email">Work email</label><input id="invite-email" type="email" value={email} onChange={event => setEmail(event.target.value)} maxLength={254} placeholder="jane@tomatosky.com" disabled={pending} required /></div>
-        <div className="admin-field"><label htmlFor="invite-role">Role</label><select id="invite-role" value={role} onChange={event => setRole(event.target.value as PortalRole)} disabled={pending}><option value="staff">Staff</option><option value="admin">Admin</option></select></div>
+        <div className="admin-field"><label htmlFor="invite-role">Role</label><Select id="invite-role" ariaLabel="Role" value={role} onChange={v => setRole(v as PortalRole)} disabled={pending} options={[{ value: "staff", label: "Staff" }, { value: "admin", label: "Admin" }]} /></div>
         <button className="folder-add admin-invite-btn" disabled={pending || !email.trim() || !name.trim()}><UserPlus size={16} /> Send invite</button>
       </form>
       {error && <p className="folder-error" role="alert">{error}</p>}
@@ -68,11 +69,9 @@ export function AdminConsole({ employees, currentUserId }: { employees: Employee
               <span className="employee-signin">{person.lastSignInAt ? `Last in ${person.lastSignInAt.slice(0, 10)}` : "Never signed in"}</span>
             </div>
             <div className="employee-controls">
-              <select value={person.role} disabled={pending || isSelf || lastAdmin} aria-label={`Role for ${person.displayName}`}
-                onChange={event => run(() => setEmployeeRole({ userId: person.userId, role: event.target.value }))}>
-                <option value="staff">Staff</option>
-                <option value="admin">Admin</option>
-              </select>
+              <Select value={person.role} disabled={pending || isSelf || lastAdmin} ariaLabel={`Role for ${person.displayName}`} className="ui-role"
+                onChange={v => run(() => setEmployeeRole({ userId: person.userId, role: v }))}
+                options={[{ value: "staff", label: "Staff" }, { value: "admin", label: "Admin" }]} />
               <button type="button" className={`employee-status ${person.active ? "on" : "off"}`} disabled={pending || (isSelf && person.active) || (person.active && lastAdmin)}
                 onClick={() => run(() => setEmployeeActive({ userId: person.userId, active: !person.active }))}
                 aria-label={`${person.active ? "Deactivate" : "Activate"} ${person.displayName}`}>

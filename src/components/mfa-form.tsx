@@ -3,6 +3,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { SignOutButton } from "./sign-out-button";
+import { Select } from "./select";
 
 type TotpSetup = { qr: string; secret: string };
 export function MfaForm({ returnTo = "/portal", allowEnrollment = true }: { returnTo?: "/portal" | "/auth/update-password"; allowEnrollment?: boolean }) {
@@ -68,7 +69,7 @@ export function MfaForm({ returnTo = "/portal", allowEnrollment = true }: { retu
       {setup && <div className="mfa-setup"><p>Scan this code with your authenticator app, then enter the code it generates.</p><img src={setup.qr} width={200} height={200} alt="Scan this QR code with your authenticator app" /><details><summary>Cannot scan the code?</summary><p>Enter this setup key manually in your authenticator. Keep it private.</p><code>{setup.secret}</code></details></div>}
       {!factorId && !error && (allowEnrollment ? <button className="button button-dark auth-submit" onClick={enroll} disabled={busy}>{busy ? "Preparing…" : "Set up authenticator"}</button> : <p className="auth-error">No supported authenticator is available. Contact your administrator to recover access.</p>)}
       {factorId && <form className="auth-form" onSubmit={verify}>
-        {factors.length > 1 && <><label htmlFor="factor">Authenticator</label><select id="factor" value={factorId} onChange={event => setFactorId(event.target.value)}>{factors.map((factor, i) => <option key={factor.id} value={factor.id}>{factor.friendly_name ?? `Authenticator ${i + 1}`}</option>)}</select></>}
+        {factors.length > 1 && <><label htmlFor="factor">Authenticator</label><Select id="factor" ariaLabel="Authenticator" value={factorId} onChange={setFactorId} options={factors.map((factor, i) => ({ value: factor.id, label: factor.friendly_name ?? `Authenticator ${i + 1}` }))} /></>}
         <label htmlFor="code">Verification code</label><input id="code" name="code" type="text" inputMode="numeric" autoComplete="one-time-code" pattern="[0-9]{6}" maxLength={6} minLength={6} required value={code} onChange={event => setCode(event.target.value.replace(/\D/g, ""))} disabled={busy} />
         <button className="button button-dark auth-submit" disabled={busy || code.length !== 6}>{busy ? "Verifying…" : "Verify and continue"}</button>
       </form>}
