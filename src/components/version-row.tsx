@@ -3,13 +3,15 @@
 import { FileDown, Trash2 } from "lucide-react";
 import {
   TEMPLATES, MAINTENANCE_TYPE_LABELS, REPORT_STATUS_LABELS, CHECK_STATE_LABELS,
-  type ReportSnapshot, type CheckState,
+  type ReportSnapshot, type CheckState, type MachineModel,
 } from "@/lib/portal/maintenance-templates";
+import { downloadReportPdf } from "@/lib/portal/report-pdf";
 
 // A read-only, expandable saved version (snapshot). Shown on the machine report
 // page and in the portal Reports section. Optional admin delete.
-export function VersionRow({ version, isAdmin, pending, onDelete }: {
+export function VersionRow({ version, machine, isAdmin, pending, onDelete }: {
   version: ReportSnapshot;
+  machine: { name: string; model: MachineModel | null; assetTag: string | null; location: string | null };
   isAdmin: boolean;
   pending: boolean;
   onDelete: () => void;
@@ -50,7 +52,7 @@ export function VersionRow({ version, isAdmin, pending, onDelete }: {
         {version.siteLocation && <span>Site: {version.siteLocation}</span>}
         {version.nextMaintenance && <span>Next: {version.nextMaintenance}</span>}
         <span className="mr-foot-actions">
-          <a className="mr-pdf" href={`/m/${version.machineId}/print?v=${version.id}`} target="_blank" rel="noopener"><FileDown size={13} /> PDF</a>
+          <button type="button" className="mr-pdf" onClick={() => downloadReportPdf(machine, version)}><FileDown size={13} /> PDF</button>
           {isAdmin && <button type="button" className="icon-btn danger" onClick={onDelete} disabled={pending} aria-label="Delete version"><Trash2 size={14} /></button>}
         </span>
       </div>

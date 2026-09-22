@@ -152,7 +152,7 @@ export function FolderBrowser({ module, folders, brandId, brands = [], machines 
         return <div className="folder-report-machine" key={m.id}>
           <div className="folder-report-head"><ClipboardList size={16} /> <strong>{m.name}</strong> <span>saved report versions ({versions.length})</span></div>
           {versions.length === 0 ? <p className="mr-history-empty">No saved versions yet for this machine.</p>
-            : versions.map(v => <VersionRow key={v.id} version={v} isAdmin={isAdmin} pending={pending} onDelete={() => removeVersion(v.id)} />)}
+            : versions.map(v => <VersionRow key={v.id} version={v} machine={m} isAdmin={isAdmin} pending={pending} onDelete={() => removeVersion(v.id)} />)}
         </div>;
       })}
     </div>}

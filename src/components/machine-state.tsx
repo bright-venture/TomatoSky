@@ -6,6 +6,7 @@ import { Cpu, FileDown, History, Trash2 } from "lucide-react";
 import { MaintenanceReportForm } from "./maintenance-report-form";
 import { VersionRow } from "./version-row";
 import { deleteMaintenanceReport, deleteReportSnapshot } from "@/lib/portal/maintenance";
+import { downloadReportPdf } from "@/lib/portal/report-pdf";
 import { STATUS_LABELS, type Machine } from "@/lib/portal/machine-types";
 import { TEMPLATES, MODEL_LABELS, type MaintenanceReport, type ReportSnapshot } from "@/lib/portal/maintenance-templates";
 
@@ -52,7 +53,7 @@ export function MachineState({ machine, report, versions, defaultTechnician, isA
         ? <span>Last edited {report.updatedAt.slice(0, 16).replace("T", " ")}{report.technicianName ? ` · ${report.technicianName}` : ""}</span>
         : <span>New report - not saved yet.</span>}
       <span className="mr-foot-actions">
-        {template && <a className="mr-pdf" href={`/m/${machine.id}/print`} target="_blank" rel="noopener"><FileDown size={13} /> PDF</a>}
+        {template && <button type="button" className="mr-pdf" onClick={() => downloadReportPdf(machine, report)}><FileDown size={13} /> PDF</button>}
         {isAdmin && report && <button type="button" className="icon-btn danger" onClick={removeReport} disabled={pending} aria-label="Delete report"><Trash2 size={15} /></button>}
       </span>
     </div>
@@ -64,7 +65,7 @@ export function MachineState({ machine, report, versions, defaultTechnician, isA
     {template && <div className="mr-history">
       <div className="mr-history-head"><History size={17} /> <strong>Saved versions</strong><span>{versions.length}</span></div>
       {versions.length === 0 ? <p className="mr-history-empty">No saved versions yet. Each time the report is saved, a copy is archived here.</p>
-        : versions.map(version => <VersionRow key={version.id} version={version} isAdmin={isAdmin} pending={pending} onDelete={() => removeVersion(version.id)} />)}
+        : versions.map(version => <VersionRow key={version.id} version={version} machine={machine} isAdmin={isAdmin} pending={pending} onDelete={() => removeVersion(version.id)} />)}
     </div>}
 
     <a className="text-link machine-back" href="/portal">Back to portal</a>
