@@ -351,3 +351,9 @@
 .brand-card.beauty{color:#f6efe6}
 .brand-card.valley .brand-card-bottom{border-color:#ffffff30}
 .folder-brand-hint{font-size:13px;color:var(--muted);margin:0;padding:10px 12px;background:#f4f6f2;border:1px dashed #d5ddd2;border-radius:6px}
+/* iOS Safari: date inputs have an intrinsic min-width and ignore width:100%,
+   so they overflow their card. Reset the native look and let them shrink. */
+input[type="date"]{-webkit-appearance:none;appearance:none;display:block;width:100%;max-width:100%;min-width:0;box-sizing:border-box;min-height:44px;background-color:#fff;text-align:left}
+input[type="date"]::-webkit-date-and-time-value{text-align:left;margin:0}
+input[type="date"]::-webkit-calendar-picker-indicator{margin-left:auto}
+.mr-form .mr-field,.admin-field{min-width:0}
