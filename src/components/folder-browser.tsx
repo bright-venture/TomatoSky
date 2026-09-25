@@ -170,7 +170,6 @@ export function FolderBrowser({ module, folders, brandId, machines = [], snapsho
           <div className="folder-report-head">
             <ClipboardList size={16} />
             <div className="folder-report-title"><strong>{m.name}</strong><span>{versions.length} saved {versions.length === 1 ? "version" : "versions"}</span></div>
-            <a className="mr-pdf" href={`/m/${m.id}`}>Open report</a>
           </div>
           {versions.length === 0 ? <p className="mr-history-empty">No saved versions yet for this machine.</p>
             : versions.map(v => <VersionRow key={v.id} version={v} machine={m} isAdmin={isAdmin} pending={pending} onDelete={() => removeVersion(v.id)} />)}
