@@ -259,6 +259,7 @@
 .footer-legal{white-space:nowrap}
 .sidebar-top{display:flex;align-items:center;justify-content:space-between;gap:12px}
 .menu-toggle{display:none}
+.menu-signout{display:none}
 @media(max-width:760px){
   .portal-shell .sidebar{position:sticky;top:0;z-index:30;padding:14px 20px;border-right:0;border-bottom:1px solid var(--line)}
   .portal-shell .menu-toggle{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:#fff;border-radius:6px;padding:8px 12px;font-size:14px;color:var(--ink);min-height:40px}
@@ -266,6 +267,12 @@
   .portal-shell .sidebar nav{display:none;flex-direction:column;overflow:visible;gap:4px;margin-top:12px}
   .portal-shell .sidebar.menu-open nav{display:flex}
   .portal-shell .sidebar nav button{white-space:normal;padding:12px 14px;gap:12px;font-size:15px}
+  /* Phones: sign out moves into the menu, so the separate header bar is hidden. */
+  .portal-shell .portal-header{display:none}
+  .portal-shell .menu-signout{display:block;margin-top:8px;padding-top:12px;border-top:1px solid var(--line)}
+  .portal-shell .menu-signout .sign-out{display:flex;flex-direction:column;gap:6px}
+  .portal-shell .menu-signout .sign-out button{width:100%;justify-content:center;padding:12px 14px;border:1px solid var(--line);border-radius:6px;background:#fff;color:#a5362c;font-size:15px}
+  .portal-shell .menu-signout .sign-out span{font-size:13px;color:#a5362c}
   /* List rows as a grid: icon | name | badge-or-actions. When a row has a badge
      (status, stock), its buttons go on a second line aligned under the name. */
   .portal-shell .inv-row:not(.movement-row){display:grid;grid-template-columns:42px minmax(0,1fr) auto;column-gap:14px;row-gap:10px;align-items:center}

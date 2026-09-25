@@ -61,12 +61,14 @@ export function PortalWorkspace({ brands, folders, role, currentUserId, employee
       <div className="sidebar-top">
         <Wordmark asLink={false} />
         <button type="button" className="menu-toggle" onClick={() => setMenuOpen(open => !open)} aria-expanded={menuOpen} aria-controls="portal-nav" aria-label={menuOpen ? "Close menu" : "Open menu"}>
-          {menuOpen ? <X size={20} /> : <Menu size={20} />}<span>{section}</span>
+          {menuOpen ? <X size={20} /> : <Menu size={20} />}<span>Menu</span>
         </button>
       </div>
       <p className="sidebar-caption">EMPLOYEE PORTAL</p>
       <nav id="portal-nav" aria-label="Portal navigation">
         {visibleSections.map(({ name, icon: Icon }) => <button key={name} className={section === name ? "selected" : ""} aria-current={section === name ? "page" : undefined} onClick={() => { setSection(name); setMenuOpen(false); }}><Icon size={19} />{name}</button>)}
+        {/* Mobile only: sign out lives in the menu (the header bar is hidden on phones). */}
+        <div className="menu-signout"><SignOutButton /></div>
       </nav>
       <div className="sidebar-bottom"><span className="company-avatar">TS</span><div><strong>Tomato Sky SAL</strong><span>Lebanon</span></div></div>
     </aside>
