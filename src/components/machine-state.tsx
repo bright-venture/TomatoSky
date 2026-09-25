@@ -38,11 +38,15 @@ export function MachineState({ machine, report, versions, defaultTechnician, isA
     });
   }
 
-  // Back returns to wherever the report was opened from (e.g. Reports). Opened
-  // straight from a QR scan there is no in-app history, so go to Reports instead.
+  // Back goes to the previous page. Only when there is none (opened straight from
+  // a QR scan) or it was the sign-in flow does it fall back to the Reports list.
   function goBack() {
-    const cameFromApp = document.referrer && new URL(document.referrer).origin === window.location.origin;
-    if (cameFromApp && window.history.length > 1) window.history.back();
+    let previousIsSignIn = false;
+    try {
+      const ref = document.referrer ? new URL(document.referrer) : null;
+      previousIsSignIn = !!ref && ref.origin === window.location.origin && /^\/(login|auth)(\/|$)/.test(ref.pathname);
+    } catch { /* unparsable referrer: treat as normal history */ }
+    if (window.history.length > 1 && !previousIsSignIn) window.history.back();
     else window.location.assign("/portal?section=Reports");
   }
 

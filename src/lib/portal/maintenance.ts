@@ -158,11 +158,24 @@ export async function saveMaintenanceReport(input: ReportInput): Promise<ReportR
     saved_at: payload.updated_at,
     saved_by: claims.sub,
   };
-  const currentVersion = !input.archivePrevious ? (existing?.current_snapshot_id as string | null | undefined) : null;
+  let currentVersion = !input.archivePrevious ? (existing?.current_snapshot_id as string | null | undefined) : null;
+  // Not linked yet (e.g. saved before the link existed): the latest version saved
+  // together with the current report is its version, so update that one.
+  if (!currentVersion && !input.archivePrevious && existing?.updated_at) {
+    const { data: last } = await supabase.from("maintenance_report_snapshots").select("id, saved_at").eq("machine_id", machineId).order("saved_at", { ascending: false }).limit(1).maybeSingle();
+    if (last && new Date(last.saved_at as string).getTime() >= new Date(existing.updated_at as string).getTime() - 5000) currentVersion = last.id as string;
+  }
   let updatedVersion = false;
   if (currentVersion) {
     const { data } = await supabase.from("maintenance_report_snapshots").update(version).eq("id", currentVersion).select("id");
     updatedVersion = !!data && data.length > 0;
+    if (updatedVersion && !existing?.current_snapshot_id) await supabase.from("maintenance_reports").update({ current_snapshot_id: currentVersion }).eq("id", reportId);
+    // The version exists but the database refused the update (edit policy not applied):
+    // don't add a duplicate version; say what's missing.
+    if (!updatedVersion) {
+      revalidatePath(`/m/${machineId}`);
+      return { ok: false, error: "The report was saved, but its saved version couldn't be updated. Ask an administrator to apply the latest database update (migration 202609170012)." };
+    }
   }
   if (!updatedVersion) {
     const { data: created } = await supabase.from("maintenance_report_snapshots").insert(version).select("id").single();
