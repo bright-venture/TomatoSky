@@ -1,4 +1,4 @@
-import { TEMPLATES, MODEL_LABELS, type MachineModel } from "./maintenance-templates";
+import { TEMPLATES, MODEL_LABELS, CHECK_STATE_LABELS, type MachineModel } from "./maintenance-templates";
 
 type PdfData = {
   reportDate: string | null;
@@ -19,7 +19,6 @@ type PdfData = {
 type PdfMachine = { name: string; model: MachineModel | null; assetTag: string | null; location: string | null };
 
 const HEAD_FILL: [number, number, number] = [238, 241, 245];
-const GROUP_FILL: [number, number, number] = [223, 228, 234];
 
 // Builds a real, downloadable PDF that mirrors the Bright Service paper form.
 // jsPDF/autotable are imported on demand so they never weigh down the main bundle.
@@ -68,24 +67,22 @@ export async function downloadReportPdf(machine: PdfMachine, data: PdfData) {
   doc.text("Maintenance Checklist", margin, y);
   y += 4;
 
-  const body: unknown[][] = [];
-  let group = "";
-  for (const item of template.checklist) {
-    if (item.group !== group) {
-      group = item.group;
-      body.push([{ content: group.toUpperCase(), colSpan: 5, styles: { fontStyle: "bold", fillColor: GROUP_FILL } }]);
-    }
+  const cols = template.columns;
+  const head = [["Component / Part", ...cols.map(c => CHECK_STATE_LABELS[c]), "Notes"]];
+  const body = template.checklist.map(item => {
     const e = d.checklist[item.key] ?? {};
-    body.push([item.label, e.state === "ok" ? "X" : "", e.state === "repaired" ? "X" : "", e.state === "changed" ? "X" : "", e.note ?? ""]);
-  }
+    return [item.label, ...cols.map(c => (e.state === c ? "X" : "")), e.note ?? ""];
+  });
+  const columnStyles: Record<number, { cellWidth?: number | "auto"; halign?: "center" }> = { 0: { cellWidth: cols.length === 2 ? 232 : 200 } };
+  cols.forEach((_, i) => { columnStyles[i + 1] = { cellWidth: 58, halign: "center" }; });
   autoTable(doc, {
     startY: y + 6,
     theme: "grid",
-    head: [["Component / Part", "OK", "Repaired", "Changed", "Notes"]],
-    body: body as never,
+    head,
+    body,
     styles: { fontSize: 8.5, cellPadding: 3, lineColor: [17, 17, 17], lineWidth: 0.5 },
     headStyles: { fillColor: HEAD_FILL, textColor: 20, halign: "center" },
-    columnStyles: { 0: { cellWidth: 200 }, 1: { cellWidth: 38, halign: "center" }, 2: { cellWidth: 55, halign: "center" }, 3: { cellWidth: 52, halign: "center" }, 4: { cellWidth: "auto" } },
+    columnStyles,
     margin: { left: margin, right: margin },
   });
   y = finalY() + 18;

@@ -1,10 +1,10 @@
 "use client";
 
-import { Fragment, useMemo, useState, useTransition } from "react";
+import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { saveMaintenanceReport } from "@/lib/portal/maintenance";
 import {
-  CHECK_STATES, CHECK_STATE_LABELS, MAINTENANCE_TYPES, MAINTENANCE_TYPE_LABELS,
+  CHECK_STATE_LABELS, MAINTENANCE_TYPES, MAINTENANCE_TYPE_LABELS,
   REPORT_STATUSES, REPORT_STATUS_LABELS, type Template, type MaintenanceReport,
 } from "@/lib/portal/maintenance-templates";
 import type { Machine } from "@/lib/portal/machine-types";
@@ -35,16 +35,6 @@ export function MaintenanceReportForm({ machine, template, defaultTechnician, in
   const [partsRequired, setPartsRequired] = useState(initial?.partsRequired ?? "");
   const [nextMaintenance, setNextMaintenance] = useState(initial?.nextMaintenance ?? "");
   const [machineStatus, setMachineStatus] = useState<string>(initial?.machineStatus ?? "");
-
-  const grouped = useMemo(() => {
-    const out: { group: string; items: Template["checklist"] }[] = [];
-    for (const item of template.checklist) {
-      const last = out[out.length - 1];
-      if (last && last.group === item.group) last.items.push(item);
-      else out.push({ group: item.group, items: [item] });
-    }
-    return out;
-  }, [template]);
 
   function setState(key: string, state: string) {
     setSaved(false);
@@ -98,21 +88,18 @@ export function MaintenanceReportForm({ machine, template, defaultTechnician, in
     </fieldset>
 
     <div className="mr-section-title">Maintenance checklist</div>
-    <div className="mr-check-legend">Tap a mark per part: OK, Repaired, or Changed. Add a note as needed.</div>
+    <div className="mr-check-legend">Mark each part: {template.columns.map(c => CHECK_STATE_LABELS[c]).join(", ")} — add a note as needed.</div>
     <div className="mr-check">
-      {grouped.map(({ group, items }) => <Fragment key={group}>
-        <div className="mr-group">{group}</div>
-        {items.map(item => {
-          const entry = checklist[item.key] ?? {};
-          return <div className="mr-row" key={item.key}>
-            <span className="mr-label">{item.label}</span>
-            <span className="mr-states">
-              {CHECK_STATES.map(s => <button type="button" key={s} className={`mr-state ${s} ${entry.state === s ? "on" : ""}`} disabled={pending} onClick={() => setState(item.key, s)} aria-pressed={entry.state === s} aria-label={`${item.label}: ${CHECK_STATE_LABELS[s]}`}>{CHECK_STATE_LABELS[s]}</button>)}
-            </span>
-            <input className="mr-note" value={entry.note ?? ""} onChange={e => setNote(item.key, e.target.value)} maxLength={300} placeholder="Notes" disabled={pending} aria-label={`${item.label} notes`} />
-          </div>;
-        })}
-      </Fragment>)}
+      {template.checklist.map(item => {
+        const entry = checklist[item.key] ?? {};
+        return <div className="mr-row" key={item.key}>
+          <span className="mr-label">{item.label}</span>
+          <span className="mr-states">
+            {template.columns.map(s => <button type="button" key={s} className={`mr-state ${s} ${entry.state === s ? "on" : ""}`} disabled={pending} onClick={() => setState(item.key, s)} aria-pressed={entry.state === s} aria-label={`${item.label}: ${CHECK_STATE_LABELS[s]}`}>{CHECK_STATE_LABELS[s]}</button>)}
+          </span>
+          <input className="mr-note" value={entry.note ?? ""} onChange={e => setNote(item.key, e.target.value)} maxLength={300} placeholder="Notes" disabled={pending} aria-label={`${item.label} notes`} />
+        </div>;
+      })}
     </div>
 
     <div className="mr-section-title">Final function test</div>
