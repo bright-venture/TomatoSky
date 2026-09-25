@@ -88,7 +88,7 @@ export function MaintenanceReportForm({ machine, template, defaultTechnician, in
     </fieldset>
 
     <div className="mr-section-title">Maintenance checklist</div>
-    <div className="mr-check-legend">Mark each part: {template.columns.map(c => CHECK_STATE_LABELS[c]).join(", ")} — add a note as needed.</div>
+    <div className="mr-check-legend">Mark each part: {template.columns.map(c => CHECK_STATE_LABELS[c]).join(" or ")}. Add a note as needed.</div>
     <div className="mr-check">
       {template.checklist.map(item => {
         const entry = checklist[item.key] ?? {};
