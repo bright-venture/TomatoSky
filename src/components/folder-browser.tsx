@@ -113,11 +113,12 @@ export function FolderBrowser({ module, folders, brandId, brands = [], machines 
         <button type="button" className={activeId ? "" : "current"} disabled={!activeId || pending} onClick={() => setCurrentId(null)}>{moduleLabel} home</button>
         {path.map(folder => <span key={folder.id}><span className="sep" aria-hidden="true">/</span><button type="button" className={folder.id === activeId ? "current" : ""} disabled={pending} onClick={() => setCurrentId(folder.id)}>{folder.name}</button></span>)}
       </nav>
-      <form className="folder-new" onSubmit={submitCreate}>
+      {/* A machine's own report folder holds its versions, not subfolders. */}
+      {machinesHere.length === 0 && <form className="folder-new" onSubmit={submitCreate}>
         {!brandId && !activeId && brands.length > 0 && <Select className="folder-brand" value={createBrand} onChange={setCreateBrand} disabled={pending} ariaLabel="Brand for new folder" options={brands.map(b => ({ value: b.id, label: b.name }))} />}
         <input value={newName} onChange={event => setNewName(event.target.value)} placeholder="New folder name" maxLength={120} disabled={pending} aria-label={`New ${moduleLabel.toLowerCase()} folder name`} />
         <button className="folder-add" disabled={pending || !newName.trim()}><FolderPlus size={16} /> Add folder</button>
-      </form>
+      </form>}
     </div>
 
     {error && <p className="folder-error" role="alert">{error}</p>}
@@ -166,7 +167,11 @@ export function FolderBrowser({ module, folders, brandId, brands = [], machines 
       {machinesHere.map(m => {
         const versions = snapsByMachine.get(m.id) ?? [];
         return <div className="folder-report-machine" key={m.id}>
-          <div className="folder-report-head"><ClipboardList size={16} /> <strong>{m.name}</strong> <span>saved report versions ({versions.length})</span><a className="mr-pdf folder-report-open" href={`/m/${m.id}`}>Open report</a></div>
+          <div className="folder-report-head">
+            <ClipboardList size={16} />
+            <div className="folder-report-title"><strong>{m.name}</strong><span>{versions.length} saved {versions.length === 1 ? "version" : "versions"}</span></div>
+            <a className="mr-pdf" href={`/m/${m.id}`}>Open report</a>
+          </div>
           {versions.length === 0 ? <p className="mr-history-empty">No saved versions yet for this machine.</p>
             : versions.map(v => <VersionRow key={v.id} version={v} machine={m} isAdmin={isAdmin} pending={pending} onDelete={() => removeVersion(v.id)} />)}
         </div>;

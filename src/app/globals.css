@@ -230,8 +230,9 @@
 .folder-report-machine{margin-top:16px}
 .folder-report-head{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--ink);margin-bottom:8px}
 .folder-report-head span{color:var(--muted);font-size:12px}
-.folder-report-head{flex-wrap:wrap}
-.folder-report-open{margin-left:auto}
+.folder-report-head{margin-bottom:10px}
+.folder-report-title{flex:1;min-width:0;display:flex;align-items:baseline;flex-wrap:wrap;gap:2px 8px}
+.folder-report-title span{color:var(--muted);font-size:12px}
 .panel-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
 .ui-select{position:relative;display:block;width:100%}
 .ui-select-trigger{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;min-height:44px;border:1px solid #cbd4c6;border-radius:6px;background:#fff;padding:10px 12px;font:inherit;font-size:14px;color:var(--ink);cursor:pointer;text-align:left}
@@ -265,9 +266,13 @@
   .portal-shell .sidebar nav{display:none;flex-direction:column;overflow:visible;gap:4px;margin-top:12px}
   .portal-shell .sidebar.menu-open nav{display:flex}
   .portal-shell .sidebar nav button{white-space:normal;padding:12px 14px;gap:12px;font-size:15px}
-  /* List rows: actions stay beside the item and only wrap when they don't fit. */
-  .portal-shell .inv-row .inv-identity{flex:1 1 110px}
-  .portal-shell .inv-row .inv-actions{width:auto;margin-left:auto;flex-wrap:wrap;justify-content:flex-end}
+  /* List rows as a grid: icon | name | badge-or-actions. When a row has a badge
+     (status, stock), its buttons go on a second line aligned under the name. */
+  .portal-shell .inv-row:not(.movement-row){display:grid;grid-template-columns:42px minmax(0,1fr) auto;column-gap:14px;row-gap:10px;align-items:center}
+  .portal-shell .inv-row .inv-actions{width:auto;margin-left:0;flex-wrap:wrap;justify-content:flex-end}
+  .portal-shell .inv-row:not(.movement-row)>.inv-actions:not(:nth-child(3)){grid-column:1 / -1;flex-wrap:nowrap;justify-content:stretch}
+  .portal-shell .inv-row:not(.movement-row)>.inv-actions:not(:nth-child(3))>.inv-move-btn{flex:1 1 0;justify-content:center;min-width:0;white-space:nowrap}
+  .portal-shell .inv-row>.inv-edit{grid-column:2 / -1}
   /* Full-width form buttons center their label. */
   .portal-shell form .folder-add{justify-content:center}
   /* Section tabs (Inventory, Administration): one equal-width segmented bar. */
