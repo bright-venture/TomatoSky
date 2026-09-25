@@ -265,6 +265,10 @@
   .portal-shell .sidebar nav{display:none;flex-direction:column;overflow:visible;gap:4px;margin-top:12px}
   .portal-shell .sidebar.menu-open nav{display:flex}
   .portal-shell .sidebar nav button{white-space:normal;padding:12px 14px;gap:12px;font-size:15px}
+  /* Section tabs (Inventory, Administration): one equal-width segmented bar. */
+  .portal-shell .inv-tabs{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:4px;background:#fff;border:1px solid var(--line);border-radius:10px;padding:4px}
+  .portal-shell .inv-tabs button{flex-direction:column;justify-content:center;gap:4px;border:0;border-radius:7px;padding:9px 4px;font-size:12px;min-width:0}
+  .portal-shell .inv-tabs button.active{background:var(--ink);color:#fff}
   /* Metric labels reserve two lines so the numbers line up across cards. */
   .portal-shell .metric>div{min-height:2.9em;align-items:flex-start;line-height:1.4}
   .portal-shell .metric strong{margin:10px 0 8px}
