@@ -11,11 +11,10 @@ import type { ReportSnapshot } from "@/lib/portal/maintenance-templates";
 import { VersionRow } from "./version-row";
 import { Select } from "./select";
 
-export function FolderBrowser({ module, folders, brandId, brands = [], machines = [], snapshots = [], isAdmin = false, initialFolderId = null }: { module: FolderModule; folders: FolderRow[]; brandId: string; brands?: { id: string; name: string }[]; machines?: Machine[]; snapshots?: ReportSnapshot[]; isAdmin?: boolean; initialFolderId?: string | null }) {
+export function FolderBrowser({ module, folders, brandId, machines = [], snapshots = [], isAdmin = false, initialFolderId = null }: { module: FolderModule; folders: FolderRow[]; brandId: string; machines?: Machine[]; snapshots?: ReportSnapshot[]; isAdmin?: boolean; initialFolderId?: string | null }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [currentId, setCurrentId] = useState<string | null>(initialFolderId ?? null);
-  const [createBrand, setCreateBrand] = useState(() => brands[0]?.id ?? "");
 
   const snapsByMachine = useMemo(() => {
     const map = new Map<string, ReportSnapshot[]>();
@@ -93,10 +92,10 @@ export function FolderBrowser({ module, folders, brandId, brands = [], machines 
   function submitCreate(event: React.FormEvent) {
     event.preventDefault();
     if (!newName.trim()) return;
-    // Top-level folders need a brand: the selected brand, or one chosen in the form
-    // when viewing "All brands". Subfolders inherit their parent's brand.
-    const folderBrand = activeId ? null : (brandId || createBrand);
-    if (!activeId && !folderBrand) { setError("Choose a brand for this folder."); return; }
+    // Top-level folders use the Brand selected at the top of the page.
+    // Subfolders inherit their parent's brand.
+    const folderBrand = activeId ? null : (brandId || null);
+    if (!activeId && !folderBrand) { setError("Choose a brand in the Brand menu above to add a folder here."); return; }
     run(() => createFolder({ module, name: newName, parentId: activeId, brandId: folderBrand }), () => setNewName(""));
   }
 
@@ -114,11 +113,12 @@ export function FolderBrowser({ module, folders, brandId, brands = [], machines 
         {path.map(folder => <span key={folder.id}><span className="sep" aria-hidden="true">/</span><button type="button" className={folder.id === activeId ? "current" : ""} disabled={pending} onClick={() => setCurrentId(folder.id)}>{folder.name}</button></span>)}
       </nav>
       {/* A machine's own report folder holds its versions, not subfolders. */}
-      {machinesHere.length === 0 && <form className="folder-new" onSubmit={submitCreate}>
-        {!brandId && !activeId && brands.length > 0 && <Select className="folder-brand" value={createBrand} onChange={setCreateBrand} disabled={pending} ariaLabel="Brand for new folder" options={brands.map(b => ({ value: b.id, label: b.name }))} />}
-        <input value={newName} onChange={event => setNewName(event.target.value)} placeholder="New folder name" maxLength={120} disabled={pending} aria-label={`New ${moduleLabel.toLowerCase()} folder name`} />
-        <button className="folder-add" disabled={pending || !newName.trim()}><FolderPlus size={16} /> Add folder</button>
-      </form>}
+      {machinesHere.length === 0 && (!brandId && !activeId
+        ? <p className="folder-brand-hint">Pick a brand in the Brand menu above to add a folder.</p>
+        : <form className="folder-new" onSubmit={submitCreate}>
+          <input value={newName} onChange={event => setNewName(event.target.value)} placeholder="New folder name" maxLength={120} disabled={pending} aria-label={`New ${moduleLabel.toLowerCase()} folder name`} />
+          <button className="folder-add" disabled={pending || !newName.trim()}><FolderPlus size={16} /> Add folder</button>
+        </form>)}
     </div>
 
     {error && <p className="folder-error" role="alert">{error}</p>}
