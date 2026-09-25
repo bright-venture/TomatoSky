@@ -385,3 +385,21 @@ input[type="date"]::-webkit-calendar-picker-indicator{margin-left:auto}
 .mr-item .mr-note{margin-top:8px}
 .report-name-link{color:inherit;text-decoration:none;border-bottom:1px solid transparent}
 .report-name-link:hover{border-bottom-color:currentColor}
+/* Report form choice groups, matching the checklist style. */
+.mr-seg-full{display:flex;width:100%}
+.mr-seg-full .mr-seg-btn{flex:1 1 0;padding:10px 8px;min-width:0}
+.mr-seg-btn.pick.on{background:var(--ink);color:#fff}
+.mr-tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.mr-tiles.mr-tiles-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.mr-tile{display:flex;align-items:center;gap:10px;min-height:44px;padding:10px 12px;text-align:left;border:1px solid var(--line);border-radius:8px;background:#fff;font:inherit;font-size:13.5px;line-height:1.3;color:var(--ink);cursor:pointer}
+.mr-tile:hover:not(:disabled){background:#f6f8f4}
+.mr-box{width:18px;height:18px;flex-shrink:0;display:grid;place-items:center;border:1.5px solid #b6c2b1;border-radius:4px;background:#fff;color:#fff}
+.mr-tile.on{border-color:#bcd3ae;background:#f1f6ec}
+.mr-tile.on .mr-box{background:#3d6b45;border-color:#3d6b45}
+.mr-dot{width:18px;height:18px;flex-shrink:0;border:1.5px solid #b6c2b1;border-radius:50%;background:#fff}
+.mr-tile.status.on .mr-dot{border:5px solid currentColor}
+.mr-tile.status.on.operational{background:#e8efe0;border-color:#bcd3ae;color:#2f5a37}
+.mr-tile.status.on.needs_maintenance{background:#f7efd9;border-color:#e6d3a3;color:#7a5f16}
+.mr-tile.status.on.waiting_parts{background:#eef0f4;border-color:#c9cfdb;color:#475775}
+.mr-tile.status.on.out_of_service{background:#f7e3df;border-color:#e8b9af;color:#a5362c}
+@media(max-width:760px){.mr-tiles{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.mr-tile{padding:10px 9px;gap:8px;font-size:13px}}

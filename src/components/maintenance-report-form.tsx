@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { MessageSquarePlus, MessageSquareText } from "lucide-react";
+import { Check, MessageSquarePlus, MessageSquareText } from "lucide-react";
 import { saveMaintenanceReport } from "@/lib/portal/maintenance";
 import {
   CHECK_STATE_LABELS, MAINTENANCE_TYPES, MAINTENANCE_TYPE_LABELS,
@@ -84,8 +84,6 @@ export function MaintenanceReportForm({ machine, template, defaultTechnician, in
     });
   }
 
-  const chip = (on: boolean) => `mr-chip ${on ? "on" : ""}`;
-
   return <form className="mr-form" onSubmit={submit}>
     <section className="mr-block">
       <h3 className="mr-block-title">Details</h3>
@@ -96,8 +94,8 @@ export function MaintenanceReportForm({ machine, template, defaultTechnician, in
         <label className="mr-field"><span>Site / location</span><input value={siteLocation} onChange={e => { touch(); setSiteLocation(e.target.value); }} maxLength={200} disabled={pending} /></label>
       </div>
       <div className="mr-sub">Maintenance type</div>
-      <div className="mr-chips" role="group" aria-label="Maintenance type">
-        {MAINTENANCE_TYPES.map(t => <button type="button" key={t} className={chip(maintenanceType === t)} disabled={pending} aria-pressed={maintenanceType === t} onClick={() => { touch(); setMaintenanceType(maintenanceType === t ? "" : t); }}>{MAINTENANCE_TYPE_LABELS[t]}</button>)}
+      <div className="mr-seg mr-seg-full" role="group" aria-label="Maintenance type">
+        {MAINTENANCE_TYPES.map(t => <button type="button" key={t} className={`mr-seg-btn pick ${maintenanceType === t ? "on" : ""}`} disabled={pending} aria-pressed={maintenanceType === t} onClick={() => { touch(); setMaintenanceType(maintenanceType === t ? "" : t); }}>{MAINTENANCE_TYPE_LABELS[t]}</button>)}
       </div>
     </section>
 
@@ -128,8 +126,13 @@ export function MaintenanceReportForm({ machine, template, defaultTechnician, in
 
     <section className="mr-block">
       <h3 className="mr-block-title">Final function test</h3>
-      <div className="mr-chips" role="group" aria-label="Final function test">
-        {template.functionTests.map(t => <button type="button" key={t.key} className={chip(!!functionTest[t.key])} disabled={pending} aria-pressed={!!functionTest[t.key]} onClick={() => { touch(); setFunctionTest(prev => ({ ...prev, [t.key]: !prev[t.key] })); }}>{t.label}</button>)}
+      <div className="mr-tiles" role="group" aria-label="Final function test">
+        {template.functionTests.map(t => {
+          const on = !!functionTest[t.key];
+          return <button type="button" key={t.key} className={`mr-tile ${on ? "on" : ""}`} disabled={pending} aria-pressed={on} onClick={() => { touch(); setFunctionTest(prev => ({ ...prev, [t.key]: !prev[t.key] })); }}>
+            <span className="mr-box" aria-hidden="true">{on && <Check size={13} strokeWidth={3} />}</span>{t.label}
+          </button>;
+        })}
       </div>
     </section>
 
@@ -146,8 +149,10 @@ export function MaintenanceReportForm({ machine, template, defaultTechnician, in
     <section className="mr-block">
       <h3 className="mr-block-title">Outcome</h3>
       <div className="mr-sub">Machine status</div>
-      <div className="mr-chips" role="group" aria-label="Machine status">
-        {REPORT_STATUSES.map(s => <button type="button" key={s} className={chip(machineStatus === s)} disabled={pending} aria-pressed={machineStatus === s} onClick={() => { touch(); setMachineStatus(machineStatus === s ? "" : s); }}>{REPORT_STATUS_LABELS[s]}</button>)}
+      <div className="mr-tiles mr-tiles-2" role="radiogroup" aria-label="Machine status">
+        {REPORT_STATUSES.map(s => <button type="button" key={s} role="radio" aria-checked={machineStatus === s} className={`mr-tile status ${s} ${machineStatus === s ? "on" : ""}`} disabled={pending} onClick={() => { touch(); setMachineStatus(machineStatus === s ? "" : s); }}>
+          <span className="mr-dot" aria-hidden="true" />{REPORT_STATUS_LABELS[s]}
+        </button>)}
       </div>
       <div className="mr-grid">
         <label className="mr-field"><span>Next maintenance</span><input type="date" value={nextMaintenance} onChange={e => { touch(); setNextMaintenance(e.target.value); }} disabled={pending} /></label>
