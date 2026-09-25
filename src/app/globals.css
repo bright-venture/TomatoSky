@@ -403,3 +403,6 @@ input[type="date"]::-webkit-calendar-picker-indicator{margin-left:auto}
 .mr-tile.status.on.waiting_parts{background:#eef0f4;border-color:#c9cfdb;color:#475775}
 .mr-tile.status.on.out_of_service{background:#f7e3df;border-color:#e8b9af;color:#a5362c}
 @media(max-width:760px){.mr-tiles{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.mr-tile{padding:10px 9px;gap:8px;font-size:13px}}
+.mr-block .mr-tiles+.mr-grid{margin-top:18px}
+.mr-form>section.mr-block:last-of-type{padding-bottom:6px}
+.mr-form .mr-actions{margin-top:20px}
