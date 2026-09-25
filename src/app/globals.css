@@ -406,3 +406,10 @@ input[type="date"]::-webkit-calendar-picker-indicator{margin-left:auto}
 .mr-block .mr-tiles+.mr-grid{margin-top:18px}
 .mr-form>section.mr-block:last-of-type{padding-bottom:6px}
 .mr-form .mr-actions{margin-top:20px}
+/* Date placeholder overlay (iOS shows empty date inputs as a blank box). */
+.date-wrap{position:relative;display:block;width:100%}
+.date-ph{position:absolute;left:13px;top:50%;transform:translateY(-50%);font-size:14px;color:#9aa79a;pointer-events:none;white-space:nowrap}
+.date-wrap:focus-within .date-ph{display:none}
+/* Hide Chrome's own "mm/dd/yyyy" under the overlay until the field is focused. */
+input[type="date"].is-empty::-webkit-datetime-edit{color:transparent}
+input[type="date"].is-empty:focus::-webkit-datetime-edit{color:inherit}

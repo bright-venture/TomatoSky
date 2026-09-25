@@ -9,6 +9,7 @@ import {
   REPORT_STATUSES, REPORT_STATUS_LABELS, type Template, type MaintenanceReport,
 } from "@/lib/portal/maintenance-templates";
 import type { Machine } from "@/lib/portal/machine-types";
+import { DateInput } from "./date-input";
 
 type Entry = { state?: string; note?: string };
 
@@ -89,7 +90,7 @@ export function MaintenanceReportForm({ machine, template, defaultTechnician, in
       <h3 className="mr-block-title">Details</h3>
       <div className="mr-grid">
         <label className="mr-field"><span>Technician</span><input value={technician} onChange={e => { touch(); setTechnician(e.target.value); }} maxLength={160} disabled={pending} required /></label>
-        <label className="mr-field"><span>Date</span><input type="date" value={reportDate} onChange={e => { touch(); setReportDate(e.target.value); }} disabled={pending} required /></label>
+        <label className="mr-field"><span>Date</span><DateInput value={reportDate} onChange={v => { touch(); setReportDate(v); }} disabled={pending} required /></label>
         <label className="mr-field"><span>Operating hours</span><input value={operatingHours} onChange={e => { touch(); setOperatingHours(e.target.value); }} maxLength={40} inputMode="numeric" placeholder="e.g. 1240" disabled={pending} /></label>
         <label className="mr-field"><span>Site / location</span><input value={siteLocation} onChange={e => { touch(); setSiteLocation(e.target.value); }} maxLength={200} disabled={pending} /></label>
       </div>
@@ -155,7 +156,7 @@ export function MaintenanceReportForm({ machine, template, defaultTechnician, in
         </button>)}
       </div>
       <div className="mr-grid">
-        <label className="mr-field"><span>Next maintenance</span><input type="date" value={nextMaintenance} onChange={e => { touch(); setNextMaintenance(e.target.value); }} disabled={pending} /></label>
+        <label className="mr-field"><span>Next maintenance</span><DateInput value={nextMaintenance} onChange={v => { touch(); setNextMaintenance(v); }} disabled={pending} /></label>
       </div>
     </section>
 

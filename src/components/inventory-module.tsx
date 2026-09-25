@@ -7,6 +7,7 @@ import { createLocation, createProduct, deleteLocation, deleteMovement, deletePr
 import type { Inventory, InventoryResult, MovementKind } from "@/lib/portal/inventory-types";
 import { MachinesConsole } from "./machines-console";
 import { Select } from "./select";
+import { DateInput } from "./date-input";
 import type { Machine } from "@/lib/portal/machine-types";
 
 type Brand = { id: string; name: string };
@@ -153,7 +154,7 @@ export function InventoryModule({ inventory, brands, brandId, machines, isAdmin 
           <div className="admin-field"><label htmlFor="m-product">Product</label><Select id="m-product" ariaLabel="Product" value={mProduct} onChange={setMProduct} disabled={pending} placeholder="Choose…" options={visibleProducts.map(p => ({ value: p.id, label: p.name }))} /></div>
           <div className="admin-field"><label htmlFor="m-location">Location</label><Select id="m-location" ariaLabel="Location" value={mLocation} onChange={setMLocation} disabled={pending} placeholder="Choose…" options={visibleLocations.map(l => ({ value: l.id, label: l.name }))} /></div>
           <div className="admin-field"><label htmlFor="m-qty">Quantity</label><input id="m-qty" type="number" min="0" step="any" value={mQty} onChange={e => setMQty(e.target.value)} placeholder="0" disabled={pending} required /></div>
-          <div className="admin-field"><label htmlFor="m-date">Date</label><input id="m-date" type="date" value={mDate} onChange={e => setMDate(e.target.value)} disabled={pending} required /></div>
+          <div className="admin-field"><label htmlFor="m-date">Date</label><DateInput id="m-date" value={mDate} onChange={setMDate} disabled={pending} required /></div>
           <div className="admin-field wide"><label htmlFor="m-note">Note <span className="opt">(optional)</span></label><input id="m-note" value={mNote} onChange={e => setMNote(e.target.value)} maxLength={400} placeholder="Supplier, PO number…" disabled={pending} /></div>
           <button className="folder-add" disabled={pending || !mProduct || !mLocation || !mQty}>{mKind === "receipt" ? <ArrowDownToLine size={16} /> : <ArrowUpFromLine size={16} />} Record</button>
         </form>
