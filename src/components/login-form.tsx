@@ -29,7 +29,7 @@ function signInErrorMessage(error: AuthError): string {
   }
 }
 
-export function LoginForm() {
+export function LoginForm({ next = null }: { next?: string | null }) {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [supportCode, setSupportCode] = useState("");
@@ -53,7 +53,9 @@ export function LoginForm() {
         setBusy(false); return;
       }
       // Full navigation discards any cached unauthenticated server components.
-      window.location.assign("/portal");
+      // Go where the user was headed (already validated server-side); that page
+      // sends them through MFA and back again if needed.
+      window.location.assign(next ?? "/portal");
     } catch {
       setError("We could not reach the sign-in service. Check your connection and try again.");
       setBusy(false);

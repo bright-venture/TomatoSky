@@ -79,8 +79,9 @@ export function MaintenanceReportForm({ machine, template, defaultTechnician, in
       });
       if (!result.ok) { setError(result.error ?? "Could not save the report."); return; }
       setSaved(true);
-      // Drop "?new=1" so a reload shows the saved report instead of a blank one.
-      router.replace(pathname);
+      // Switch to the saved report so a reload shows it (not another blank one),
+      // and further saves update this report instead of starting a new one.
+      router.replace(`${pathname}?view=current`);
       router.refresh();
     });
   }

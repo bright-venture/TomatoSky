@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { NavTracker } from "@/components/back-button";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -8,5 +9,5 @@ export const metadata: Metadata = {
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <html lang="en" data-scroll-behavior="smooth"><body>{children}</body></html>;
+  return <html lang="en" data-scroll-behavior="smooth"><body><NavTracker />{children}</body></html>;
 }

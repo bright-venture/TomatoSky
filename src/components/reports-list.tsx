@@ -56,7 +56,7 @@ export function ReportsList({ machines, reports, snapshots, brandId, onOpenVersi
         return <li key={machine.id} className="inv-row">
           <span className="inv-icon"><ClipboardList size={19} /></span>
           <div className="inv-identity">
-            <strong><a className="report-name-link" href={`/m/${machine.id}`} title="Open the current report">{machine.name}</a></strong>
+            <strong><a className="report-name-link" href={`/m/${machine.id}?view=current`} title="Open the current report">{machine.name}</a></strong>
             <span>{machine.model ? MODEL_LABELS[machine.model] : "No model"}{machine.assetTag ? ` · ID ${machine.assetTag}` : ""}</span>
           </div>
           {report?.machineStatus
@@ -65,8 +65,8 @@ export function ReportsList({ machines, reports, snapshots, brandId, onOpenVersi
           <div className="inv-actions">
             {hasFolder
               ? <button type="button" className="inv-move-btn" onClick={() => onOpenVersions(machine)} title="Open saved versions in the assigned Documents folder"><FolderOpen size={15} /> Versions ({count})</button>
-              : <a className="inv-move-btn" href={`/m/${machine.id}`} title="View saved versions on the report page (assign a Documents folder in Inventory → Machines to open them there)"><FolderOpen size={15} /> Versions ({count})</a>}
-            <a className="inv-move-btn" href={`/m/${machine.id}?new=1`}><FilePlus size={15} /> New report</a>
+              : <a className="inv-move-btn" href={`/m/${machine.id}?view=current`} title="View saved versions on the report page (assign a Documents folder in Inventory → Machines to open them there)"><FolderOpen size={15} /> Versions ({count})</a>}
+            <a className="inv-move-btn" href={`/m/${machine.id}`}><FilePlus size={15} /> New report</a>
           </div>
         </li>;
       })}

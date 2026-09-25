@@ -428,3 +428,4 @@ input[type="date"].is-empty::-webkit-datetime-edit{opacity:0}
 input[type="date"]{cursor:pointer}
 /* Fixed height so an empty date field (blank on iOS) is as tall as the other fields. */
 .date-wrap input[type="date"]{height:44px;min-height:44px;line-height:22px}
+button.text-link{background:none;border:0;border-bottom:1px solid #a6b39e;border-radius:0;padding:0 0 7px;font:inherit;font-size:14px;color:inherit;cursor:pointer}

@@ -1,13 +1,15 @@
 import "server-only";
 import { redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
+import { withNext } from "./next";
 
 // Call this in each protected page, server action, and API handler.
 // Never rely on a layout, a browser check, or editable user_metadata for access.
-export async function requireEmployee(requireMfa = true) {
+// `returnTo` (pages only) brings the user back here after sign-in and MFA.
+export async function requireEmployee(requireMfa = true, returnTo?: string) {
   const supabase = await createClient();
   const verified = await supabase.auth.getClaims().catch(() => null);
-  if (!verified || verified.error || !verified.data?.claims?.sub) redirect("/login");
+  if (!verified || verified.error || !verified.data?.claims?.sub) redirect(withNext("/login", returnTo));
   const claims = verified.data.claims;
   const { data: member, error } = await supabase
     .from("portal_members")
@@ -17,7 +19,7 @@ export async function requireEmployee(requireMfa = true) {
 
   if (error) redirect("/auth/access?reason=unavailable");
   if (!member?.active || (member.role !== "admin" && member.role !== "staff")) redirect("/auth/access");
-  if (requireMfa && claims.aal !== "aal2") redirect("/auth/mfa");
+  if (requireMfa && claims.aal !== "aal2") redirect(withNext("/auth/mfa", returnTo));
   return { supabase, member, claims };
 }
 

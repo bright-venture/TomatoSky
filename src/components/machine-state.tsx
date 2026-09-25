@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { ArrowLeft, Cpu, FileDown, History, Trash2 } from "lucide-react";
 import { MaintenanceReportForm } from "./maintenance-report-form";
+import { BackButton } from "./back-button";
 import { VersionRow } from "./version-row";
 import { deleteMaintenanceReport, deleteReportSnapshot } from "@/lib/portal/maintenance";
 import { downloadReportPdf } from "@/lib/portal/report-pdf";
@@ -38,20 +39,9 @@ export function MachineState({ machine, report, versions, defaultTechnician, isA
     });
   }
 
-  // Back goes to the previous page. Only when there is none (opened straight from
-  // a QR scan) or it was the sign-in flow does it fall back to the Reports list.
-  function goBack() {
-    let previousIsSignIn = false;
-    try {
-      const ref = document.referrer ? new URL(document.referrer) : null;
-      previousIsSignIn = !!ref && ref.origin === window.location.origin && /^\/(login|auth)(\/|$)/.test(ref.pathname);
-    } catch { /* unparsable referrer: treat as normal history */ }
-    if (window.history.length > 1 && !previousIsSignIn) window.history.back();
-    else window.location.assign("/portal?section=Reports");
-  }
-
   return <div className="machine-card wide">
-    <button type="button" className="mr-back" onClick={goBack}><ArrowLeft size={16} /> Back</button>
+    {/* Previous page; opened straight from a QR scan, it goes to the Reports list. */}
+    <BackButton className="mr-back" fallback="/portal?section=Reports"><ArrowLeft size={16} /> Back</BackButton>
     <span className="machine-icon"><Cpu size={26} /></span>
     <p className="eyebrow">MACHINE REPORT</p>
     <h1>{machine.name}</h1>
@@ -84,6 +74,6 @@ export function MachineState({ machine, report, versions, defaultTechnician, isA
         : versions.map(version => <VersionRow key={version.id} version={version} machine={machine} isAdmin={isAdmin} pending={pending} onDelete={() => removeVersion(version.id)} />)}
     </div>}
 
-    <a className="text-link machine-back" href="/portal">Back to portal</a>
+    <BackButton className="text-link machine-back" fallback="/portal?section=Reports">Back</BackButton>
   </div>;
 }

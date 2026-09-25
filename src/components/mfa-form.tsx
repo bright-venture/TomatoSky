@@ -6,7 +6,7 @@ import { SignOutButton } from "./sign-out-button";
 import { Select } from "./select";
 
 type TotpSetup = { qr: string; secret: string };
-export function MfaForm({ returnTo = "/portal", allowEnrollment = true }: { returnTo?: "/portal" | "/auth/update-password"; allowEnrollment?: boolean }) {
+export function MfaForm({ returnTo = "/portal", allowEnrollment = true }: { returnTo?: string; allowEnrollment?: boolean }) {
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [factorId, setFactorId] = useState("");

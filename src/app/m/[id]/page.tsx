@@ -6,14 +6,18 @@ import { MachineState } from "@/components/machine-state";
 export const metadata: Metadata = { title: "Machine report", robots: { index: false, follow: false } };
 export const dynamic = "force-dynamic";
 
-export default async function MachinePage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ new?: string }> }) {
+export default async function MachinePage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ view?: string }> }) {
   const { id } = await params;
-  // "?new=1" (from the Reports list) opens a blank form; saving it becomes the
+  const validId = /^[0-9a-f-]{36}$/i.test(id);
+  // By default (e.g. a scanned QR) this opens a NEW report: saving it becomes the
   // machine's current report, and the previous one stays in Saved versions.
-  const startNew = (await searchParams).new === "1";
-  // Login + MFA are enforced here, so a scanned QR opens only for signed-in employees.
-  const { supabase, member } = await requireEmployee();
-  const machine = /^[0-9a-f-]{36}$/i.test(id) ? await getMachine(supabase, id) : null;
+  // "?view=current" (from the portal) opens the current report for editing.
+  const viewCurrent = (await searchParams).view === "current";
+  const startNew = !viewCurrent;
+  // Login + MFA are enforced here, so a scanned QR opens only for signed-in
+  // employees; after signing in they come straight back to this page.
+  const { supabase, member } = await requireEmployee(true, validId ? `/m/${id}${viewCurrent ? "?view=current" : ""}` : undefined);
+  const machine = validId ? await getMachine(supabase, id) : null;
 
   if (!machine) return <main className="machine-page">
     <div className="machine-card missing">

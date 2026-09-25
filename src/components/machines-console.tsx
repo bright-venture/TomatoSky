@@ -76,7 +76,7 @@ export function MachinesConsole({ machines, isAdmin, brands, brandId }: { machin
               <button type="button" className="inv-move-btn" onClick={() => setQr(machine)} disabled={pending}><QrCode size={15} /> QR</button>
               <button type="button" className="icon-btn" onClick={() => { setError(""); setEditing({ id: machine.id, name: machine.name, location: machine.location ?? "", model: machine.model ?? "walk_behind_scrubber", assetTag: machine.assetTag ?? "" }); }} disabled={pending} aria-label={`Edit ${machine.name}`}><Pencil size={15} /></button>
               <button type="button" className="icon-btn danger" onClick={() => { if (window.confirm(`Are you sure you want to delete "${machine.name}"? This cannot be undone.`)) run(() => deleteMachine({ id: machine.id })); }} disabled={pending} aria-label={`Delete ${machine.name}`}><Trash2 size={15} /></button>
-            </> : <a className="inv-move-btn" href={`/m/${machine.id}`}>View state</a>}
+            </> : <a className="inv-move-btn" href={`/m/${machine.id}?view=current`}>View report</a>}
           </div>
         </li>)}
       </ul>
