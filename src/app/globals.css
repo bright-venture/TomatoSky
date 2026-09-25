@@ -263,6 +263,13 @@
   .portal-shell .sidebar nav{display:none;flex-direction:column;overflow:visible;gap:4px;margin-top:12px}
   .portal-shell .sidebar.menu-open nav{display:flex}
   .portal-shell .sidebar nav button{white-space:normal;padding:12px 14px;gap:12px;font-size:15px}
+  /* Metric labels reserve two lines so the numbers line up across cards. */
+  .portal-shell .metric>div{min-height:2.9em;align-items:flex-start;line-height:1.4}
+  .portal-shell .metric strong{margin:10px 0 8px}
+  /* Brand rows: "View inventory" always sits under the name, aligned with it. */
+  .portal-shell .portal-brand-row{flex-wrap:wrap;column-gap:12px;row-gap:8px}
+  .portal-shell .portal-brand-row>div{flex:1;min-width:0}
+  .portal-shell .portal-brand-row button{flex-basis:100%;margin-left:59px;justify-content:flex-start;gap:8px}
 }
 .mr-report-meta em,.v-item-note{font-family:var(--sans)}
 /* Mobile: let headers/controls wrap instead of squeezing text. */
