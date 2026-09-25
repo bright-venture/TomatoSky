@@ -78,7 +78,7 @@ export const TEMPLATES: Record<MachineModel, Template> = {
   },
   walk_behind_scrubber: {
     model: "walk_behind_scrubber",
-    columns: ["ok", "repaired", "changed"],
+    columns: ["repaired", "changed"],
     checklist: checklist([
       "Brush: Scrubbing brush / pad",
       "Brush: Pad / brush holder",
