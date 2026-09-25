@@ -64,10 +64,10 @@ export function MachineState({ machine, report, versions, defaultTechnician, isA
 
     <div className="mr-meta-line">
       {startNew
-        ? <span>New report. The current one stays in Saved versions.</span>
+        ? <span className="mr-meta-text"><small>New report</small><span>The current one stays in Saved versions.</span></span>
         : report?.updatedAt
-          ? <span>Last edited {report.updatedAt.slice(0, 16).replace("T", " ")}{report.technicianName ? ` · ${report.technicianName}` : ""}</span>
-          : <span>New report - not saved yet.</span>}
+          ? <span className="mr-meta-text"><small>Last edited</small><span>{report.updatedAt.slice(0, 16).replace("T", " ")}{report.technicianName ? ` · ${report.technicianName}` : ""}</span></span>
+          : <span className="mr-meta-text"><small>New report</small><span>Not saved yet.</span></span>}
       {!startNew && <span className="mr-foot-actions">
         {template && <button type="button" className="mr-pdf" onClick={() => downloadReportPdf(machine, report)}><FileDown size={13} /> PDF</button>}
         {isAdmin && report && <button type="button" className="icon-btn danger" onClick={removeReport} disabled={pending} aria-label="Delete report"><Trash2 size={15} /></button>}
