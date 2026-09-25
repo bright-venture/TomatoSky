@@ -230,6 +230,8 @@
 .folder-report-machine{margin-top:16px}
 .folder-report-head{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--ink);margin-bottom:8px}
 .folder-report-head span{color:var(--muted);font-size:12px}
+.folder-report-head{flex-wrap:wrap}
+.folder-report-open{margin-left:auto}
 .panel-actions{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
 .ui-select{position:relative;display:block;width:100%}
 .ui-select-trigger{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;min-height:44px;border:1px solid #cbd4c6;border-radius:6px;background:#fff;padding:10px 12px;font:inherit;font-size:14px;color:var(--ink);cursor:pointer;text-align:left}

@@ -22,6 +22,23 @@ export function FolderBrowser({ module, folders, brandId, brands = [], machines 
     for (const s of snapshots) { const l = map.get(s.machineId) ?? []; l.push(s); map.set(s.machineId, l); }
     return map;
   }, [snapshots]);
+  // Machines linked to each folder, so a machine's folder isn't labelled "Empty".
+  const machinesByFolder = useMemo(() => {
+    const map = new Map<string, Machine[]>();
+    for (const mc of machines) if (mc.documentsFolderId) { const l = map.get(mc.documentsFolderId) ?? []; l.push(mc); map.set(mc.documentsFolderId, l); }
+    return map;
+  }, [machines]);
+
+  function folderMeta(folderId: string, subCount: number): string {
+    const parts: string[] = [];
+    if (subCount) parts.push(`${subCount} ${subCount === 1 ? "subfolder" : "subfolders"}`);
+    const linked = machinesByFolder.get(folderId) ?? [];
+    if (linked.length) {
+      const n = linked.reduce((sum, mc) => sum + (snapsByMachine.get(mc.id)?.length ?? 0), 0);
+      parts.push(n ? `${n} saved ${n === 1 ? "version" : "versions"}` : "No saved versions yet");
+    }
+    return parts.join(" · ") || "Empty";
+  }
 
   function removeVersion(id: string) {
     if (!window.confirm("Are you sure you want to delete this saved version? This cannot be undone.")) return;
@@ -134,7 +151,7 @@ export function FolderBrowser({ module, folders, brandId, brands = [], machines 
           <span className="folder-icon"><Folder size={20} /></span>
           <button type="button" className="folder-open" onClick={() => setCurrentId(folder.id)} disabled={pending}>
             <span className="folder-name">{folder.name}</span>
-            <span className="folder-meta">{subCount ? `${subCount} ${subCount === 1 ? "subfolder" : "subfolders"}` : "Empty"}</span>
+            <span className="folder-meta">{folderMeta(folder.id, subCount)}</span>
           </button>
           <div className="folder-actions">
             <button type="button" className="icon-btn" onClick={() => { setError(""); setMoving(null); setRenaming({ id: folder.id, name: folder.name }); }} disabled={pending} aria-label={`Rename ${folder.name}`}><Pencil size={15} /></button>
@@ -149,7 +166,7 @@ export function FolderBrowser({ module, folders, brandId, brands = [], machines 
       {machinesHere.map(m => {
         const versions = snapsByMachine.get(m.id) ?? [];
         return <div className="folder-report-machine" key={m.id}>
-          <div className="folder-report-head"><ClipboardList size={16} /> <strong>{m.name}</strong> <span>saved report versions ({versions.length})</span></div>
+          <div className="folder-report-head"><ClipboardList size={16} /> <strong>{m.name}</strong> <span>saved report versions ({versions.length})</span><a className="mr-pdf folder-report-open" href={`/m/${m.id}`}>Open report</a></div>
           {versions.length === 0 ? <p className="mr-history-empty">No saved versions yet for this machine.</p>
             : versions.map(v => <VersionRow key={v.id} version={v} machine={m} isAdmin={isAdmin} pending={pending} onDelete={() => removeVersion(v.id)} />)}
         </div>;
