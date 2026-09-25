@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ArrowUpRight, Boxes, ChartNoAxesCombined, FileText, LayoutDashboard, Leaf, Package, Settings2, Sprout, Warehouse } from "lucide-react";
+import { ArrowUpRight, Boxes, ChartNoAxesCombined, FileText, LayoutDashboard, Leaf, Menu, Package, Settings2, Sprout, Warehouse, X } from "lucide-react";
 import { Wordmark } from "./wordmark";
 import { SignOutButton } from "./sign-out-button";
 import { FolderBrowser } from "./folder-browser";
@@ -36,6 +36,8 @@ export function PortalWorkspace({ brands, folders, role, currentUserId, employee
   const [brandId, setBrandId] = useState("");
   // When the Reports "Versions" button opens a machine's Documents folder.
   const [targetFolder, setTargetFolder] = useState<string | null>(null);
+  // Mobile only: the ☰ menu that replaces the horizontally scrolling section tabs.
+  const [menuOpen, setMenuOpen] = useState(false);
 
   function openVersions(machine: Machine) {
     if (!machine.documentsFolderId) return;
@@ -55,11 +57,16 @@ export function PortalWorkspace({ brands, folders, role, currentUserId, employee
   const productCounts = Object.fromEntries(brands.map(brand => [brand.id, inventory.products.filter(product => product.brandId === brand.id).length]));
 
   return <div className="portal-shell">
-    <aside className="sidebar">
-      <Wordmark asLink={false} />
+    <aside className={`sidebar${menuOpen ? " menu-open" : ""}`}>
+      <div className="sidebar-top">
+        <Wordmark asLink={false} />
+        <button type="button" className="menu-toggle" onClick={() => setMenuOpen(open => !open)} aria-expanded={menuOpen} aria-controls="portal-nav" aria-label={menuOpen ? "Close menu" : "Open menu"}>
+          {menuOpen ? <X size={20} /> : <Menu size={20} />}<span>{section}</span>
+        </button>
+      </div>
       <p className="sidebar-caption">EMPLOYEE PORTAL</p>
-      <nav aria-label="Portal navigation">
-        {visibleSections.map(({ name, icon: Icon }) => <button key={name} className={section === name ? "selected" : ""} aria-current={section === name ? "page" : undefined} onClick={() => setSection(name)}><Icon size={19} />{name}</button>)}
+      <nav id="portal-nav" aria-label="Portal navigation">
+        {visibleSections.map(({ name, icon: Icon }) => <button key={name} className={section === name ? "selected" : ""} aria-current={section === name ? "page" : undefined} onClick={() => { setSection(name); setMenuOpen(false); }}><Icon size={19} />{name}</button>)}
       </nav>
       <div className="sidebar-bottom"><span className="company-avatar">TS</span><div><strong>Tomato Sky SAL</strong><span>Lebanon</span></div></div>
     </aside>
