@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ArrowUpRight, Boxes, ChartNoAxesCombined, FileText, LayoutDashboard, Leaf, Menu, Package, Settings2, Sprout, Warehouse, X } from "lucide-react";
 import { Wordmark } from "./wordmark";
 import { SignOutButton } from "./sign-out-button";
@@ -31,8 +31,17 @@ const details: Record<Exclude<Section, "Overview">, { title: string; body: strin
   Administration: { title: "One company. The right access.", body: "Employee access currently requires an account created by your administrator and an approved membership. In-app invitations and permission management are not available yet." },
 };
 
-export function PortalWorkspace({ brands, folders, role, currentUserId, employees, inventory, machines, reports, snapshots }: { brands: Brand[]; folders: Folder[]; role: PortalRole; currentUserId: string; employees: Employee[]; inventory: Inventory; machines: Machine[]; reports: MaintenanceReport[]; snapshots: ReportSnapshot[] }) {
-  const [section, setSection] = useState<Section>("Overview");
+export function PortalWorkspace({ brands, folders, role, currentUserId, employees, inventory, machines, reports, snapshots, initialSection }: { brands: Brand[]; folders: Folder[]; role: PortalRole; currentUserId: string; employees: Employee[]; inventory: Inventory; machines: Machine[]; reports: MaintenanceReport[]; snapshots: ReportSnapshot[]; initialSection?: string }) {
+  // The section lives in the URL (?section=Reports) so Back from a report returns here.
+  const [section, setSection] = useState<Section>(() => {
+    const match = sections.find(item => item.name === initialSection);
+    return match && (match.name !== "Administration" || role === "admin") ? match.name : "Overview";
+  });
+  useEffect(() => {
+    const url = new URL(window.location.href);
+    if (section === "Overview") url.searchParams.delete("section"); else url.searchParams.set("section", section);
+    window.history.replaceState(window.history.state, "", url);
+  }, [section]);
   const [brandId, setBrandId] = useState("");
   // When the Reports "Versions" button opens a machine's Documents folder.
   const [targetFolder, setTargetFolder] = useState<string | null>(null);

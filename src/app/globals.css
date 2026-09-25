@@ -413,3 +413,5 @@ input[type="date"]::-webkit-calendar-picker-indicator{margin-left:auto}
 /* Hide Chrome's own "mm/dd/yyyy" under the overlay until the field is focused. */
 input[type="date"].is-empty::-webkit-datetime-edit{color:transparent}
 input[type="date"].is-empty:focus::-webkit-datetime-edit{color:inherit}
+.mr-back{align-self:flex-start;display:inline-flex;align-items:center;gap:6px;margin:-8px 0 18px -6px;padding:7px 10px;border:0;border-radius:6px;background:none;font:inherit;font-size:14px;color:var(--ink);cursor:pointer}
+.mr-back:hover{background:#f1f4ef}

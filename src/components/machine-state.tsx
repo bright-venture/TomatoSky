@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Cpu, FileDown, History, Trash2 } from "lucide-react";
+import { ArrowLeft, Cpu, FileDown, History, Trash2 } from "lucide-react";
 import { MaintenanceReportForm } from "./maintenance-report-form";
 import { VersionRow } from "./version-row";
 import { deleteMaintenanceReport, deleteReportSnapshot } from "@/lib/portal/maintenance";
@@ -38,7 +38,16 @@ export function MachineState({ machine, report, versions, defaultTechnician, isA
     });
   }
 
+  // Back returns to wherever the report was opened from (e.g. Reports). Opened
+  // straight from a QR scan there is no in-app history, so go to Reports instead.
+  function goBack() {
+    const cameFromApp = document.referrer && new URL(document.referrer).origin === window.location.origin;
+    if (cameFromApp && window.history.length > 1) window.history.back();
+    else window.location.assign("/portal?section=Reports");
+  }
+
   return <div className="machine-card wide">
+    <button type="button" className="mr-back" onClick={goBack}><ArrowLeft size={16} /> Back</button>
     <span className="machine-icon"><Cpu size={26} /></span>
     <p className="eyebrow">MACHINE REPORT</p>
     <h1>{machine.name}</h1>

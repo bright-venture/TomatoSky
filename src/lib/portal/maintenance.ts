@@ -149,6 +149,8 @@ export async function saveMaintenanceReport(input: ReportInput): Promise<ReportR
     technician_name: payload.technician_name,
     checklist,
     function_test: functionTest,
+    // Same clock as the report's updated_at, so "already archived?" checks are exact.
+    saved_at: payload.updated_at,
     saved_by: claims.sub,
   });
 

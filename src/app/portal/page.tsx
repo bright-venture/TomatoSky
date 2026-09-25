@@ -11,7 +11,8 @@ import { getMachines, getReports, getSnapshots } from "@/lib/portal/machine-data
 export const metadata: Metadata = { title: "Employee portal", robots: { index: false, follow: false } };
 export const dynamic = "force-dynamic";
 
-export default async function PortalPage() {
+export default async function PortalPage({ searchParams }: { searchParams: Promise<{ section?: string }> }) {
+  const { section } = await searchParams;
   const { supabase, member, claims } = await requireEmployee();
   const role = member.role as PortalRole;
   const [{ data: brands, error: brandsError }, folderResult] = await Promise.all([
@@ -30,5 +31,5 @@ export default async function PortalPage() {
     getReports(supabase),
     getSnapshots(supabase),
   ]);
-  return <PortalWorkspace brands={brands ?? []} folders={folders} role={role} currentUserId={claims.sub} employees={employees} inventory={inventory} machines={machines} reports={reports} snapshots={snapshots} />;
+  return <PortalWorkspace brands={brands ?? []} folders={folders} role={role} currentUserId={claims.sub} employees={employees} inventory={inventory} machines={machines} reports={reports} snapshots={snapshots} initialSection={section} />;
 }
