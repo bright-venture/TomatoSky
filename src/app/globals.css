@@ -286,7 +286,8 @@
   .portal-shell .inv-tabs button{flex-direction:column;justify-content:center;gap:4px;border:0;border-radius:7px;padding:9px 4px;font-size:12px;min-width:0}
   .portal-shell .inv-tabs button.active{background:var(--ink);color:#fff}
   /* Metric labels reserve two lines so the numbers line up across cards. */
-  .portal-shell .metric>div{min-height:2.9em;align-items:flex-start;line-height:1.4}
+  .portal-shell .metric{text-align:center}
+  .portal-shell .metric>div{min-height:2.9em;align-items:flex-start;justify-content:center;line-height:1.4}
   .portal-shell .metric strong{margin:10px 0 8px}
   /* Brand rows: "View inventory" always sits under the name, aligned with it. */
   .portal-shell .portal-brand-row{flex-wrap:wrap;column-gap:12px;row-gap:8px}
