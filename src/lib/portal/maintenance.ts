@@ -92,7 +92,8 @@ export async function saveMaintenanceReport(input: ReportInput): Promise<ReportR
   // Starting a new report replaces the current one. If the current report has
   // content that was never archived (e.g. saved before versions existed), keep
   // a copy in Saved versions first, stamped with its original save time.
-  if (existing && input.archivePrevious) {
+  // A report already linked to its version is archived by definition.
+  if (existing && input.archivePrevious && !existing.current_snapshot_id) {
     const hasContent = existing.machine_status || existing.maintenance_type || existing.problem_found || existing.work_performed
       || existing.parts_replaced || Object.keys((existing.checklist as object | null) ?? {}).length > 0;
     const { data: last } = await supabase.from("maintenance_report_snapshots").select("saved_at").eq("machine_id", machineId).order("saved_at", { ascending: false }).limit(1).maybeSingle();
@@ -122,18 +123,22 @@ export async function saveMaintenanceReport(input: ReportInput): Promise<ReportR
     }
   }
 
+  let reportId: string;
   if (existing) {
     const { data, error } = await supabase.from("maintenance_reports").update(payload).eq("id", existing.id).select("id");
     if (error) return { ok: false, error: "Could not save the report. Please try again." };
     if (!data || data.length === 0) return { ok: false, error: "Saving is not enabled yet. Ask an administrator to apply the latest database update (migration 202609170009)." };
+    reportId = existing.id as string;
   } else {
-    const { error } = await supabase.from("maintenance_reports").insert(payload);
-    if (error) return { ok: false, error: "Could not save the report. Please try again." };
+    const { data, error } = await supabase.from("maintenance_reports").insert(payload).select("id").single();
+    if (error || !data) return { ok: false, error: "Could not save the report. Please try again." };
+    reportId = data.id as string;
   }
 
-  // Archive a snapshot of this save (version history). Best-effort: the current
-  // report is already saved, so a snapshot failure does not fail the save.
-  await supabase.from("maintenance_report_snapshots").insert({
+  // Version history: one version per report, not per save. Re-saving the current
+  // report updates its linked version; a new report (or an unlinked one) gets a
+  // new version. Best-effort: the report itself is already saved.
+  const version = {
     machine_id: machineId,
     model,
     report_date: payload.report_date,
@@ -152,7 +157,17 @@ export async function saveMaintenanceReport(input: ReportInput): Promise<ReportR
     // Same clock as the report's updated_at, so "already archived?" checks are exact.
     saved_at: payload.updated_at,
     saved_by: claims.sub,
-  });
+  };
+  const currentVersion = !input.archivePrevious ? (existing?.current_snapshot_id as string | null | undefined) : null;
+  let updatedVersion = false;
+  if (currentVersion) {
+    const { data } = await supabase.from("maintenance_report_snapshots").update(version).eq("id", currentVersion).select("id");
+    updatedVersion = !!data && data.length > 0;
+  }
+  if (!updatedVersion) {
+    const { data: created } = await supabase.from("maintenance_report_snapshots").insert(version).select("id").single();
+    if (created) await supabase.from("maintenance_reports").update({ current_snapshot_id: created.id }).eq("id", reportId);
+  }
 
   // Keep the machine's live status in sync with the report's outcome.
   const live = machineStatus ? LIVE_STATUS[machineStatus] : null;

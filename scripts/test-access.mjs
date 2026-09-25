@@ -33,6 +33,7 @@ test('portal database permissions', async t => {
     await db.exec(await readFile(new URL('../supabase/migrations/202609170009_reports_editable.sql', import.meta.url), 'utf8'));
     await db.exec(await readFile(new URL('../supabase/migrations/202609170010_report_snapshots.sql', import.meta.url), 'utf8'));
     await db.exec(await readFile(new URL('../supabase/migrations/202609170011_machine_documents_folder.sql', import.meta.url), 'utf8'));
+    await db.exec(await readFile(new URL('../supabase/migrations/202609170012_report_current_version.sql', import.meta.url), 'utf8'));
     const alice = '00000000-0000-0000-0000-000000000001';
     const bob = '00000000-0000-0000-0000-000000000002';
     const inactive = '00000000-0000-0000-0000-000000000003';
@@ -299,6 +300,9 @@ test('portal database permissions', async t => {
       await asUser(alice, 'aal2');
       const snapId = (await db.query("insert into public.maintenance_report_snapshots (machine_id, model, machine_status) values ($1, 'walk_behind_scrubber', 'operational') returning id", [machineId])).rows[0].id;
       assert.equal((await db.query('select * from public.maintenance_report_snapshots where machine_id = $1', [machineId])).rows.length, 1);
+      // Staff can update the current report's version (re-saving the same report).
+      await db.query("update public.maintenance_report_snapshots set machine_status = 'waiting_parts' where id = $1", [snapId]);
+      assert.equal((await db.query('select machine_status from public.maintenance_report_snapshots where id = $1', [snapId])).rows[0].machine_status, 'waiting_parts');
       // Staff cannot delete a snapshot: RLS blocks, 0 rows removed, no error.
       await db.query('delete from public.maintenance_report_snapshots where id = $1', [snapId]);
       assert.equal((await db.query('select * from public.maintenance_report_snapshots where id = $1', [snapId])).rows.length, 1);
