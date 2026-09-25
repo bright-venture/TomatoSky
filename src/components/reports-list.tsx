@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { ArrowUpRight, ClipboardList, FolderOpen } from "lucide-react";
+import { ClipboardList, FilePlus, FolderOpen } from "lucide-react";
 import type { Machine } from "@/lib/portal/machine-types";
 import { MODEL_LABELS, REPORT_STATUS_LABELS, type MaintenanceReport, type ReportSnapshot } from "@/lib/portal/maintenance-templates";
 import { Select } from "./select";
@@ -39,7 +39,7 @@ export function ReportsList({ machines, reports, snapshots, brandId, onOpenVersi
 
   return <section className="portal-panel">
     <div className="panel-heading">
-      <div><h2>Maintenance reports</h2><p>{visible.length} {visible.length === 1 ? "machine" : "machines"}{brandId ? " in this brand" : ""}. Open a report to edit, or its versions in Documents.</p></div>
+      <div><h2>Maintenance reports</h2><p>{visible.length} {visible.length === 1 ? "machine" : "machines"}{brandId ? " in this brand" : ""}. Tap a machine to open its current report, or start a new one.</p></div>
       <div className="list-sort"><label htmlFor="rep-sort">Sort</label><Select id="rep-sort" ariaLabel="Sort machines" className="ui-sort" value={sort} onChange={setSort} options={[
         { value: "name-asc", label: "Name (A-Z)" },
         { value: "name-desc", label: "Name (Z-A)" },
@@ -56,7 +56,7 @@ export function ReportsList({ machines, reports, snapshots, brandId, onOpenVersi
         return <li key={machine.id} className="inv-row">
           <span className="inv-icon"><ClipboardList size={19} /></span>
           <div className="inv-identity">
-            <strong>{machine.name}</strong>
+            <strong><a className="report-name-link" href={`/m/${machine.id}`} title="Open the current report">{machine.name}</a></strong>
             <span>{machine.model ? MODEL_LABELS[machine.model] : "No model"}{machine.assetTag ? ` · ID ${machine.assetTag}` : ""}</span>
           </div>
           {report?.machineStatus
@@ -66,7 +66,7 @@ export function ReportsList({ machines, reports, snapshots, brandId, onOpenVersi
             {hasFolder
               ? <button type="button" className="inv-move-btn" onClick={() => onOpenVersions(machine)} title="Open saved versions in the assigned Documents folder"><FolderOpen size={15} /> Versions ({count})</button>
               : <a className="inv-move-btn" href={`/m/${machine.id}`} title="View saved versions on the report page (assign a Documents folder in Inventory → Machines to open them there)"><FolderOpen size={15} /> Versions ({count})</a>}
-            <a className="inv-move-btn" href={`/m/${machine.id}`}>Open report <ArrowUpRight size={15} /></a>
+            <a className="inv-move-btn" href={`/m/${machine.id}?new=1`}><FilePlus size={15} /> New report</a>
           </div>
         </li>;
       })}

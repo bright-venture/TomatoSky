@@ -6,8 +6,11 @@ import { MachineState } from "@/components/machine-state";
 export const metadata: Metadata = { title: "Machine report", robots: { index: false, follow: false } };
 export const dynamic = "force-dynamic";
 
-export default async function MachinePage({ params }: { params: Promise<{ id: string }> }) {
+export default async function MachinePage({ params, searchParams }: { params: Promise<{ id: string }>; searchParams: Promise<{ new?: string }> }) {
   const { id } = await params;
+  // "?new=1" (from the Reports list) opens a blank form; saving it becomes the
+  // machine's current report, and the previous one stays in Saved versions.
+  const startNew = (await searchParams).new === "1";
   // Login + MFA are enforced here, so a scanned QR opens only for signed-in employees.
   const { supabase, member } = await requireEmployee();
   const machine = /^[0-9a-f-]{36}$/i.test(id) ? await getMachine(supabase, id) : null;
@@ -24,5 +27,5 @@ export default async function MachinePage({ params }: { params: Promise<{ id: st
     getMachineReport(supabase, machine.id),
     getMachineSnapshots(supabase, machine.id),
   ]);
-  return <main className="machine-page"><MachineState machine={machine} report={report} versions={versions} defaultTechnician={member.display_name} isAdmin={member.role === "admin"} /></main>;
+  return <main className="machine-page"><MachineState machine={machine} report={report} versions={versions} defaultTechnician={member.display_name} isAdmin={member.role === "admin"} startNew={startNew} /></main>;
 }

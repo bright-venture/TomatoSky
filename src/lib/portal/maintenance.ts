@@ -87,7 +87,41 @@ export async function saveMaintenanceReport(input: ReportInput): Promise<ReportR
   // Update the machine's existing report, or create it if there is none yet.
   // Avoids relying on ON CONFLICT so it works across migration states, and detects
   // an RLS-blocked update (the edit policy not applied) rather than failing silently.
-  const { data: existing } = await supabase.from("maintenance_reports").select("id").eq("machine_id", machineId).maybeSingle();
+  const { data: existing } = await supabase.from("maintenance_reports").select("*").eq("machine_id", machineId).maybeSingle();
+
+  // Starting a new report replaces the current one. If the current report has
+  // content that was never archived (e.g. saved before versions existed), keep
+  // a copy in Saved versions first, stamped with its original save time.
+  if (existing && input.archivePrevious) {
+    const hasContent = existing.machine_status || existing.maintenance_type || existing.problem_found || existing.work_performed
+      || existing.parts_replaced || Object.keys((existing.checklist as object | null) ?? {}).length > 0;
+    const { data: last } = await supabase.from("maintenance_report_snapshots").select("saved_at").eq("machine_id", machineId).order("saved_at", { ascending: false }).limit(1).maybeSingle();
+    const archived = last && existing.updated_at && new Date(last.saved_at as string) >= new Date(existing.updated_at as string);
+    if (hasContent && !archived) {
+      const { error: archiveError } = await supabase.from("maintenance_report_snapshots").insert({
+        machine_id: machineId,
+        model: existing.model,
+        report_date: existing.report_date,
+        maintenance_type: existing.maintenance_type,
+        operating_hours: existing.operating_hours,
+        site_location: existing.site_location,
+        machine_status: existing.machine_status,
+        problem_found: existing.problem_found,
+        work_performed: existing.work_performed,
+        parts_replaced: existing.parts_replaced,
+        parts_required: existing.parts_required,
+        next_maintenance: existing.next_maintenance,
+        technician_name: existing.technician_name,
+        checklist: existing.checklist,
+        function_test: existing.function_test,
+        saved_at: existing.updated_at ?? new Date().toISOString(),
+        saved_by: existing.updated_by ?? claims.sub,
+      });
+      // Never overwrite a report we couldn't archive.
+      if (archiveError) return { ok: false, error: "Could not archive the current report before starting a new one. Please try again." };
+    }
+  }
+
   if (existing) {
     const { data, error } = await supabase.from("maintenance_reports").update(payload).eq("id", existing.id).select("id");
     if (error) return { ok: false, error: "Could not save the report. Please try again." };

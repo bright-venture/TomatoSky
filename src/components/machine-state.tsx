@@ -10,12 +10,13 @@ import { downloadReportPdf } from "@/lib/portal/report-pdf";
 import { STATUS_LABELS, type Machine } from "@/lib/portal/machine-types";
 import { TEMPLATES, MODEL_LABELS, type MaintenanceReport, type ReportSnapshot } from "@/lib/portal/maintenance-templates";
 
-export function MachineState({ machine, report, versions, defaultTechnician, isAdmin }: {
+export function MachineState({ machine, report, versions, defaultTechnician, isAdmin, startNew = false }: {
   machine: Machine;
   report: MaintenanceReport | null;
   versions: ReportSnapshot[];
   defaultTechnician: string;
   isAdmin: boolean;
+  startNew?: boolean;
 }) {
   const router = useRouter();
   const [pending, startTransition] = useTransition();
@@ -49,18 +50,20 @@ export function MachineState({ machine, report, versions, defaultTechnician, isA
     <span className={`status-badge big ${machine.status}`}>{STATUS_LABELS[machine.status]}</span>
 
     <div className="mr-meta-line">
-      {report?.updatedAt
-        ? <span>Last edited {report.updatedAt.slice(0, 16).replace("T", " ")}{report.technicianName ? ` · ${report.technicianName}` : ""}</span>
-        : <span>New report - not saved yet.</span>}
-      <span className="mr-foot-actions">
+      {startNew
+        ? <span>New report. The current one stays in Saved versions.</span>
+        : report?.updatedAt
+          ? <span>Last edited {report.updatedAt.slice(0, 16).replace("T", " ")}{report.technicianName ? ` · ${report.technicianName}` : ""}</span>
+          : <span>New report - not saved yet.</span>}
+      {!startNew && <span className="mr-foot-actions">
         {template && <button type="button" className="mr-pdf" onClick={() => downloadReportPdf(machine, report)}><FileDown size={13} /> PDF</button>}
         {isAdmin && report && <button type="button" className="icon-btn danger" onClick={removeReport} disabled={pending} aria-label="Delete report"><Trash2 size={15} /></button>}
-      </span>
+      </span>}
     </div>
 
     {!template
       ? <p className="machine-notice">This machine has no report template yet. Ask an administrator to set its model in the portal.</p>
-      : <MaintenanceReportForm machine={machine} template={template} defaultTechnician={defaultTechnician} initial={report} />}
+      : <MaintenanceReportForm key={startNew ? "new" : "current"} machine={machine} template={template} defaultTechnician={defaultTechnician} initial={startNew ? null : report} isNew={startNew} />}
 
     {template && <div className="mr-history">
       <div className="mr-history-head"><History size={17} /> <strong>Saved versions</strong><span>{versions.length}</span></div>

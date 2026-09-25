@@ -168,6 +168,9 @@ export type ReportInput = {
   technicianName: string | null;
   checklist: Record<string, { state?: string; note?: string }>;
   functionTest: Record<string, boolean>;
+  // True when this save starts a new report: the current one is archived first
+  // if it has content that isn't already in Saved versions.
+  archivePrevious?: boolean;
 };
 
 export type ReportResult = { ok: boolean; error?: string };
