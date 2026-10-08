@@ -4,22 +4,22 @@ import { useState, useTransition } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { Check, MessageSquarePlus, MessageSquareText } from "lucide-react";
 import { saveMaintenanceReport } from "@/lib/portal/maintenance";
-import {
-  CHECK_STATE_LABELS, MAINTENANCE_TYPES, MAINTENANCE_TYPE_LABELS,
-  REPORT_STATUSES, REPORT_STATUS_LABELS, type Template, type MaintenanceReport,
-} from "@/lib/portal/maintenance-templates";
+import { MAINTENANCE_TYPES, REPORT_STATUSES, type Template, type MaintenanceReport } from "@/lib/portal/maintenance-templates";
+import { REPORT_TEXT, type Lang } from "@/lib/portal/report-i18n";
 import type { Machine } from "@/lib/portal/machine-types";
 import { DateInput } from "./date-input";
 
 type Entry = { state?: string; note?: string };
 
-export function MaintenanceReportForm({ machine, template, defaultTechnician, initial, isNew = false }: {
+export function MaintenanceReportForm({ machine, template, defaultTechnician, initial, isNew = false, lang = "en" }: {
   machine: Machine;
   template: Template;
   defaultTechnician: string;
   initial: MaintenanceReport | null;
   isNew?: boolean;
+  lang?: Lang;
 }) {
+  const t = REPORT_TEXT[lang];
   const router = useRouter();
   const pathname = usePathname();
   const [pending, startTransition] = useTransition();
@@ -77,7 +77,7 @@ export function MaintenanceReportForm({ machine, template, defaultTechnician, in
         functionTest,
         archivePrevious: isNew,
       });
-      if (!result.ok) { setError(result.error ?? "Could not save the report."); return; }
+      if (!result.ok) { setError(result.error ?? t.saveError); return; }
       setSaved(true);
       // Switch to the saved report so a reload shows it (not another blank one),
       // and further saves update this report instead of starting a new one.
@@ -86,85 +86,90 @@ export function MaintenanceReportForm({ machine, template, defaultTechnician, in
     });
   }
 
+  const ar = lang === "ar";
+  const stateLabels = template.columns.map(c => t.states[c]);
+  // Arabic shows the form's Arabic wording with the English underneath, like the paper.
+  const itemLabel = (item: { label: string; ar: string }) => ar ? item.ar : item.label;
+
   return <form className="mr-form" onSubmit={submit}>
     <section className="mr-block">
-      <h3 className="mr-block-title">Details</h3>
+      <h3 className="mr-block-title">{t.details}</h3>
       <div className="mr-grid">
-        <label className="mr-field"><span>Technician</span><input value={technician} onChange={e => { touch(); setTechnician(e.target.value); }} maxLength={160} disabled={pending} required /></label>
-        <label className="mr-field"><span>Date</span><DateInput value={reportDate} onChange={v => { touch(); setReportDate(v); }} disabled={pending} required /></label>
-        <label className="mr-field"><span>Operating hours</span><input value={operatingHours} onChange={e => { touch(); setOperatingHours(e.target.value); }} maxLength={40} inputMode="numeric" placeholder="e.g. 1240" disabled={pending} /></label>
-        <label className="mr-field"><span>Site / location</span><input value={siteLocation} onChange={e => { touch(); setSiteLocation(e.target.value); }} maxLength={200} disabled={pending} /></label>
+        <label className="mr-field"><span>{t.technician}</span><input dir="auto" value={technician} onChange={e => { touch(); setTechnician(e.target.value); }} maxLength={160} disabled={pending} required /></label>
+        <label className="mr-field"><span>{t.date}</span><DateInput value={reportDate} onChange={v => { touch(); setReportDate(v); }} placeholder={t.chooseDate} disabled={pending} required /></label>
+        <label className="mr-field"><span>{t.hours}</span><input dir="auto" value={operatingHours} onChange={e => { touch(); setOperatingHours(e.target.value); }} maxLength={40} inputMode="numeric" placeholder={t.hoursHint} disabled={pending} /></label>
+        <label className="mr-field"><span>{t.site}</span><input dir="auto" value={siteLocation} onChange={e => { touch(); setSiteLocation(e.target.value); }} maxLength={200} disabled={pending} /></label>
       </div>
-      <div className="mr-sub">Maintenance type</div>
-      <div className="mr-seg mr-seg-full" role="group" aria-label="Maintenance type">
-        {MAINTENANCE_TYPES.map(t => <button type="button" key={t} className={`mr-seg-btn pick ${maintenanceType === t ? "on" : ""}`} disabled={pending} aria-pressed={maintenanceType === t} onClick={() => { touch(); setMaintenanceType(maintenanceType === t ? "" : t); }}>{MAINTENANCE_TYPE_LABELS[t]}</button>)}
+      <div className="mr-sub">{t.type}</div>
+      <div className="mr-seg mr-seg-full" role="group" aria-label={t.type}>
+        {MAINTENANCE_TYPES.map(m => <button type="button" key={m} className={`mr-seg-btn pick ${maintenanceType === m ? "on" : ""}`} disabled={pending} aria-pressed={maintenanceType === m} onClick={() => { touch(); setMaintenanceType(maintenanceType === m ? "" : m); }}>{t.types[m]}</button>)}
       </div>
     </section>
 
     <section className="mr-block">
-      <h3 className="mr-block-title">Maintenance checklist</h3>
-      <p className="mr-block-sub">Mark {template.columns.map(c => CHECK_STATE_LABELS[c]).join(" or ")} where it applies. Leave a part blank if it is fine.</p>
+      <h3 className="mr-block-title">{t.checklist}</h3>
+      <p className="mr-block-sub">{t.markHint(stateLabels)}{template.columns.includes("ok") ? "" : ` ${t.blankHint}`}</p>
       <div className="mr-items">
         {template.checklist.map(item => {
           const entry = checklist[item.key] ?? {};
           const noteShown = openNotes.has(item.key) || !!entry.note;
           return <div className="mr-item" key={item.key}>
             <div className="mr-item-main">
-              <span className="mr-item-label">{item.label}</span>
+              <span className="mr-item-label">{itemLabel(item)}{ar && <small className="mr-item-en" dir="ltr">{item.label}</small>}</span>
               <div className="mr-item-controls">
-                <div className="mr-seg" role="group" aria-label={item.label}>
-                  {template.columns.map(s => <button type="button" key={s} className={`mr-seg-btn ${s} ${entry.state === s ? "on" : ""}`} disabled={pending} onClick={() => setState(item.key, s)} aria-pressed={entry.state === s}>{CHECK_STATE_LABELS[s]}</button>)}
+                <div className="mr-seg" role="group" aria-label={itemLabel(item)}>
+                  {template.columns.map(s => <button type="button" key={s} className={`mr-seg-btn ${s} ${entry.state === s ? "on" : ""}`} disabled={pending} onClick={() => setState(item.key, s)} aria-pressed={entry.state === s}>{t.states[s]}</button>)}
                 </div>
-                <button type="button" className={`mr-note-btn ${noteShown ? "on" : ""}`} disabled={pending || noteShown} onClick={() => openNote(item.key)} aria-label={`Add a note for ${item.label}`} title="Add a note">
+                <button type="button" className={`mr-note-btn ${noteShown ? "on" : ""}`} disabled={pending || noteShown} onClick={() => openNote(item.key)} aria-label={t.noteFor(itemLabel(item))} title={t.addNote}>
                   {noteShown ? <MessageSquareText size={16} /> : <MessageSquarePlus size={16} />}
                 </button>
               </div>
             </div>
-            {noteShown && <input className="mr-note" value={entry.note ?? ""} onChange={e => setNote(item.key, e.target.value)} maxLength={300} placeholder="Note" disabled={pending} autoFocus={!entry.note} aria-label={`${item.label} note`} />}
+            {noteShown && <input className="mr-note" dir="auto" value={entry.note ?? ""} onChange={e => setNote(item.key, e.target.value)} maxLength={300} placeholder={t.note} disabled={pending} autoFocus={!entry.note} aria-label={`${itemLabel(item)} - ${t.note}`} />}
           </div>;
         })}
       </div>
     </section>
 
     <section className="mr-block">
-      <h3 className="mr-block-title">Final function test</h3>
-      <div className="mr-tiles" role="group" aria-label="Final function test">
-        {template.functionTests.map(t => {
-          const on = !!functionTest[t.key];
-          return <button type="button" key={t.key} className={`mr-tile ${on ? "on" : ""}`} disabled={pending} aria-pressed={on} onClick={() => { touch(); setFunctionTest(prev => ({ ...prev, [t.key]: !prev[t.key] })); }}>
-            <span className="mr-box" aria-hidden="true">{on && <Check size={13} strokeWidth={3} />}</span>{t.label}
+      <h3 className="mr-block-title">{t.functionTest}</h3>
+      <div className="mr-tiles" role="group" aria-label={t.functionTest}>
+        {template.functionTests.map(test => {
+          const on = !!functionTest[test.key];
+          return <button type="button" key={test.key} className={`mr-tile ${on ? "on" : ""}`} disabled={pending} aria-pressed={on} onClick={() => { touch(); setFunctionTest(prev => ({ ...prev, [test.key]: !prev[test.key] })); }}>
+            <span className="mr-box" aria-hidden="true">{on && <Check size={13} strokeWidth={3} />}</span>{itemLabel(test)}
           </button>;
         })}
       </div>
     </section>
 
     <section className="mr-block">
-      <h3 className="mr-block-title">Findings</h3>
+      <h3 className="mr-block-title">{t.findings}</h3>
       <div className="mr-grid">
-        <label className="mr-field"><span>Problem / fault found</span><textarea value={problemFound} onChange={e => { touch(); setProblemFound(e.target.value); }} maxLength={4000} rows={2} disabled={pending} /></label>
-        <label className="mr-field"><span>Work performed</span><textarea value={workPerformed} onChange={e => { touch(); setWorkPerformed(e.target.value); }} maxLength={4000} rows={2} disabled={pending} /></label>
-        <label className="mr-field"><span>Parts replaced</span><textarea value={partsReplaced} onChange={e => { touch(); setPartsReplaced(e.target.value); }} maxLength={4000} rows={2} disabled={pending} /></label>
-        <label className="mr-field"><span>Parts still required</span><textarea value={partsRequired} onChange={e => { touch(); setPartsRequired(e.target.value); }} maxLength={4000} rows={2} disabled={pending} /></label>
+        <label className="mr-field"><span>{t.problem}</span><textarea dir="auto" value={problemFound} onChange={e => { touch(); setProblemFound(e.target.value); }} maxLength={4000} rows={2} disabled={pending} /></label>
+        <label className="mr-field"><span>{t.work}</span><textarea dir="auto" value={workPerformed} onChange={e => { touch(); setWorkPerformed(e.target.value); }} maxLength={4000} rows={2} disabled={pending} /></label>
+        <label className="mr-field"><span>{t.replaced}</span><textarea dir="auto" value={partsReplaced} onChange={e => { touch(); setPartsReplaced(e.target.value); }} maxLength={4000} rows={2} disabled={pending} /></label>
+        <label className="mr-field"><span>{t.required}</span><textarea dir="auto" value={partsRequired} onChange={e => { touch(); setPartsRequired(e.target.value); }} maxLength={4000} rows={2} disabled={pending} /></label>
       </div>
     </section>
 
     <section className="mr-block">
-      <h3 className="mr-block-title">Outcome</h3>
-      <div className="mr-sub">Machine status</div>
-      <div className="mr-tiles mr-tiles-2" role="radiogroup" aria-label="Machine status">
+      <h3 className="mr-block-title">{t.outcome}</h3>
+      <div className="mr-sub">{t.status}</div>
+      <div className="mr-tiles mr-tiles-2" role="radiogroup" aria-label={t.status}>
         {REPORT_STATUSES.map(s => <button type="button" key={s} role="radio" aria-checked={machineStatus === s} className={`mr-tile status ${s} ${machineStatus === s ? "on" : ""}`} disabled={pending} onClick={() => { touch(); setMachineStatus(machineStatus === s ? "" : s); }}>
-          <span className="mr-dot" aria-hidden="true" />{REPORT_STATUS_LABELS[s]}
+          <span className="mr-dot" aria-hidden="true" />{t.statuses[s]}
         </button>)}
       </div>
       <div className="mr-grid">
-        <label className="mr-field"><span>Next maintenance</span><DateInput value={nextMaintenance} onChange={v => { touch(); setNextMaintenance(v); }} disabled={pending} /></label>
+        <label className="mr-field"><span>{t.next}</span><DateInput value={nextMaintenance} onChange={v => { touch(); setNextMaintenance(v); }} placeholder={t.chooseDate} disabled={pending} /></label>
       </div>
     </section>
 
     {error && <p className="auth-error" role="alert">{error}</p>}
     <div className="mr-actions">
-      {saved && <span className="machine-saved" role="status">Saved.</span>}
-      <button type="submit" className="folder-add mr-save" disabled={pending}>{pending ? "Saving…" : "Save report"}</button>
+      {saved && <span className="machine-saved" role="status">{t.saved}</span>}
+      <button type="submit" className="folder-add mr-save" disabled={pending}>{pending ? t.saving : t.save}</button>
     </div>
   </form>;
 }

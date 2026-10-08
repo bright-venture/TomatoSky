@@ -58,5 +58,5 @@ export async function proxy(request: NextRequest) {
 export const config = {
   // Run on all routes except static assets, so host routing can also cover the
   // public site. Portal session logic stays gated to portal paths above.
-  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.(?:png|svg|jpg|jpeg|gif|webp|ico)$).*)"],
+  matcher: ["/((?!_next/static|_next/image|favicon.ico|.*\\.(?:png|svg|jpg|jpeg|gif|webp|ico|ttf)$).*)"],
 };

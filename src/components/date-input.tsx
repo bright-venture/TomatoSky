@@ -23,7 +23,7 @@ export function DateInput({ value, onChange, placeholder = "Choose a date", id, 
     try { event.currentTarget.showPicker?.(); } catch { /* already open or unsupported: native behaviour applies */ }
   }
 
-  return <span className="date-wrap">
+  return <span className="date-wrap" dir="ltr">
     <input id={id} type="date" value={value} disabled={disabled} required={required} aria-label={ariaLabel}
       className={showPlaceholder ? "is-empty" : undefined}
       onChange={e => onChange(e.target.value)}
